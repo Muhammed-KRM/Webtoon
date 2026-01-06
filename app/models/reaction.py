@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueCons
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.core.enums import ReactionType
 
 
 class Reaction(Base):
@@ -20,7 +21,7 @@ class Reaction(Base):
     comment_id = Column(Integer, ForeignKey("comments.id"), nullable=True, index=True)
     
     # Reaction type and content
-    reaction_type = Column(String, nullable=False)  # emoji, gif, memoji
+    reaction_type = Column(String, nullable=False)  # emoji, gif, memoji (use ReactionType enum)
     reaction_value = Column(String, nullable=False)  # emoji code, gif URL, memoji data
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

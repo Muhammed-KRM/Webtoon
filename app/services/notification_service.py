@@ -52,7 +52,7 @@ class NotificationService:
         NotificationService.create_notification(
             db=db,
             user_id=user_id,
-            notification_type="translation_completed",
+            notification_type=NotificationType.TRANSLATION_COMPLETED,
             title="Translation Completed",
             message=f"Translation of {series_title} to {target_lang} is ready!",
             link=f"/chapters/{chapter_id}"
@@ -70,7 +70,7 @@ class NotificationService:
         NotificationService.create_notification(
             db=db,
             user_id=user_id,
-            notification_type="new_chapter",
+            notification_type=NotificationType.NEW_CHAPTER,
             title="New Chapter Available",
             message=f"Chapter {chapter_number} of {series_title} is now available!",
             link=f"/series/{series_id}/chapters/{chapter_number}"
@@ -87,7 +87,7 @@ class NotificationService:
         NotificationService.create_notification(
             db=db,
             user_id=user_id,
-            notification_type="comment_reply",
+            notification_type=NotificationType.COMMENT_REPLY,
             title="New Reply",
             message=f"{commenter_username} replied to your comment",
             link=f"/comments/{comment_id}"

@@ -130,12 +130,14 @@ def get_status(
     job.status = task_status["status"]
     job.progress = task_status["progress"]
     
+    from app.core.enums import JobStatus
+    
     if task_status["status"] == "SUCCESS":
-        job.status = "COMPLETED"
+        job.status = JobStatus.COMPLETED
         job.result_data = task_status["result"]
         job.completed_at = datetime.utcnow()
     elif task_status["status"] == "FAILURE":
-        job.status = "FAILED"
+        job.status = JobStatus.FAILED
         job.error_message = task_status.get("error", "Unknown error")
     
     db.commit()

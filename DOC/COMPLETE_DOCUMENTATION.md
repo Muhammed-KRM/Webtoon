@@ -1,5 +1,107 @@
 # 📚 Webtoon AI Translator - Kapsamlı Dokümantasyon
 
+## 📦 **KURULUM REHBERİ**
+
+### Hızlı Başlangıç
+
+1. **İlk Kurulum:**
+   ```bash
+   SETUP.bat
+   ```
+   Bu komut:
+   - ✅ Python virtual environment oluşturur
+   - ✅ Tüm temel paketleri kurar
+   - ✅ Opsiyonel paketleri kurar (Hugging Face, Argos, spaCy)
+   - ✅ spaCy modellerini indirir
+   - ✅ Gerekli klasörleri oluşturur
+   - ✅ .env dosyasını hazırlar
+
+2. **Sadece Opsiyonel Paketler:**
+   ```bash
+   INSTALL_OPTIONAL.bat
+   ```
+   Eğer temel kurulum yapıldıysa ve sadece opsiyonel paketleri eklemek istiyorsanız.
+
+3. **Projeyi Başlatma:**
+   ```bash
+   START.bat
+   ```
+   Bu komut:
+   - ✅ Redis'i başlatır (Docker ile)
+   - ✅ Celery Worker'ı başlatır
+   - ✅ FastAPI'yi başlatır
+   - ✅ Tarayıcıda API dokümantasyonunu açar
+
+### Kurulacak Paketler
+
+#### Zorunlu Paketler
+- **FastAPI**: Web framework
+- **Celery**: Task queue
+- **Redis**: Cache ve message broker
+- **SQLAlchemy**: ORM
+- **OpenAI**: AI çeviri
+- **EasyOCR**: OCR engine
+- **OpenCV + Pillow**: Görüntü işleme
+- **httpx + BeautifulSoup**: Web scraping
+
+#### Opsiyonel Paketler (Otomatik Kurulur)
+- **Hugging Face Transformers** (`transformers==4.36.2` + `torch==2.1.2`)
+  - Offline AI çevirisi için
+  - ~2GB disk alanı (ilk kullanımda model indirilir)
+  
+- **Argos Translate** (`argostranslate==1.9.0`)
+  - Offline ücretsiz çeviri için
+  - ~200-500MB disk alanı (dil çiftine göre)
+  
+- **spaCy** (`spacy==3.7.2` + `en_core_web_sm` model)
+  - Gelişmiş özel isim tespiti (NER) için
+  - ~50-100MB disk alanı
+
+### Sistem Gereksinimleri
+
+- **Python**: 3.10 veya üzeri
+- **RAM**: Minimum 4GB (8GB önerilir)
+- **Disk**: Minimum 5GB boş alan
+- **Docker**: Redis için (opsiyonel, Memurai da kullanılabilir)
+
+### .env Dosyası Yapılandırması
+
+`SETUP.bat` çalıştırıldığında `.env.example` dosyasından `.env` oluşturulur. Düzenlemeniz gerekenler:
+
+```env
+SECRET_KEY=your-secret-key-here-min-32-chars
+DATABASE_URL=postgresql://user:pass@localhost/webtoon_db
+# veya SQLite için:
+# DATABASE_URL=sqlite:///./webtoon.db
+OPENAI_API_KEY=sk-your-openai-api-key-here
+REDIS_URL=redis://localhost:6379/0
+```
+
+Detaylı rehber: `DOC/API_KEY_REHBERI.md`
+
+### Otomatik Fallback Sistemi
+
+Sistem otomatik olarak en iyi çeviri servisini seçer:
+
+**Çeviri Servisleri (Öncelik Sırası):**
+1. **Hugging Face** (varsa) → Offline, ücretsiz, kaliteli
+2. **Argos Translate** (varsa) → Offline, ücretsiz, hızlı
+3. **Google Translate** (her zaman) → Online, ücretsiz
+4. **DeepL** (varsa) → Online, API key gerekebilir
+
+**NER Servisleri (Öncelik Sırası):**
+1. **spaCy** (varsa) → %85-95 doğruluk
+2. **Regex** (her zaman) → %60-70 doğruluk
+
+### Sorun Giderme
+
+- **"spaCy model bulunamadı"**: `python -m spacy download en_core_web_sm`
+- **"Argos Translate paketleri yok"**: İlk kullanımda otomatik indirilir
+- **"Hugging Face model yüklenemiyor"**: İnternet bağlantısı gerekli (ilk kullanımda model indirilir)
+- **Redis bağlantı hatası**: Docker'ı başlatın veya Memurai kullanın
+
+---
+
 ## 🎯 **UYGULAMANIN AMACI**
 
 **Webtoon AI Translator**, webtoon serilerini otomatik olarak çeviren profesyonel bir makine çeviri platformudur. Uygulama, görüntü işleme (Computer Vision), doğal dil işleme (NLP) ve asenkron iş akışları kullanarak webtoon görsellerindeki metinleri algılar, çevirir ve orijinal görsel üzerine yerleştirir.
@@ -96,6 +198,48 @@
 - **Neden:** Hata takibi, performans izleme
 - **Kullanım:** Request/response logging, error tracking
 
+### Enum System
+**Python Enum (IntEnum, Enum)**
+- **Nerede:** `app/core/enums.py`, `app/core/tag_enum.py`
+- **Neden:** Tip güvenliği, tutarlılık, hata önleme
+- **Kullanım:** 
+  - `TranslateType`: AI (1) veya FREE (2) çeviri seçimi
+  - `TranslationMode`: CLEAN (1) veya OVERLAY (2) işleme modu
+  - `JobStatus`: PENDING, PROCESSING, COMPLETED, FAILED
+  - `SeriesStatus`: ONGOING, COMPLETED, HIATUS
+  - `TranslationStatus`: PENDING, PROCESSING, COMPLETED, FAILED
+  - `PlanType`: FREE, BASIC, PREMIUM
+  - `PaymentStatus`: PENDING, COMPLETED, FAILED
+  - `ReactionType`: EMOJI, GIF, MEMOJI
+  - `NotificationType`: TRANSLATION_COMPLETED, NEW_CHAPTER, COMMENT_REPLY, vb.
+  - `ProperNounType`: AUTO, YES, NO
+  - `UserRole`: ADMIN, USER, GUEST, PREMIUM
+  - `Theme`: LIGHT, DARK, AUTO
+  - `Quality`: HIGH, FAST
+  - `WebtoonTag`: 200+ webtoon tag'i (action, comedy, system, return, vb.)
+
+### Tag & Category System
+**Tag Enum + Database Models**
+- **Nerede:** `app/core/tag_enum.py`, `app/models/tag.py`, `app/services/series_manager.py`
+- **Neden:** Serilere tag ve kategori ekleme, filtreleme, arama
+- **Kullanım:**
+  - `WebtoonTag` enum: 200+ tag (genre, webtoon-specific, character, relationship, vb.)
+  - `Tag` model: Many-to-many relationship ile serilere tag ekleme
+  - `Category` model: Ana kategori sistemi (Action, Romance, vb.)
+  - Tag validation: Enum'dan validate edilir, geçersiz tag'ler atlanır
+  - Otomatik tag oluşturma: Var olmayan tag'ler otomatik oluşturulur
+
+### Series Management System
+**SeriesManager Service**
+- **Nerede:** `app/services/series_manager.py`, `app/operations/translation_publisher.py`
+- **Neden:** Seri bulma/oluşturma, chapter çakışma çözümü, transaction yönetimi
+- **Kullanım:**
+  - `create_or_get_series()`: Seri bulma/oluşturma (aynı isimde seri varsa yeni oluşturmaz)
+  - `create_or_update_chapter()`: Chapter oluşturma/güncelleme (çakışma yönetimi)
+  - `handle_chapter_conflict()`: Translation çakışma çözümü
+  - `normalize_series_name()`: Seri ismi normalizasyonu (büyük/küçük harf, özel karakterler)
+  - Transaction rollback: Hata durumunda otomatik rollback ve dosya temizleme
+
 ### Database Migrations
 **Alembic**
 - **Nerede:** `alembic/`, `alembic.ini`
@@ -161,19 +305,21 @@ webtoon-ai-translator/
 │   │           ├── jobs.py              # Job history endpoints
 │   │           ├── files.py             # File serving endpoints
 │   │           ├── admin.py             # Admin endpoints
+│   │           ├── admin_content.py     # Admin content management (manual upload, page edit)
 │   │           ├── metrics.py           # Metrics endpoints
 │   │           ├── users.py             # User management endpoints
 │   │           ├── series.py            # Series management endpoints
-│   │           ├── comments.py          # Comment endpoints
+│   │           ├── comments.py         # Comment endpoints
 │   │           ├── reactions.py        # Reaction endpoints
-│   │           ├── subscription.py      # Subscription endpoints
-│   │           ├── payments.py          # Payment endpoints
-│   │           ├── site_settings.py     # Site settings endpoints
-│   │           ├── reading.py           # Reading history/bookmarks/ratings
+│   │           ├── subscription.py     # Subscription endpoints
+│   │           ├── payments.py         # Payment endpoints
+│   │           ├── site_settings.py    # Site settings endpoints
+│   │           ├── reading.py          # Reading history/bookmarks/ratings
 │   │           ├── notifications.py    # Notification endpoints
-│   │           ├── public.py            # Public (no auth) endpoints
-│   │           ├── cache.py             # Cache management endpoints
-│   │           └── logs.py              # Log viewing endpoints
+│   │           ├── public.py           # Public (no auth) endpoints
+│   │           ├── discovery.py        # Discovery endpoints (trending, featured, recommendations)
+│   │           ├── cache.py            # Cache management endpoints
+│   │           └── logs.py             # Log viewing endpoints
 │   │
 │   ├── 📁 core/                        # Çekirdek modüller (14 dosya)
 │   │   ├── config.py                    # Uygulama ayarları
@@ -305,7 +451,7 @@ webtoon-ai-translator/
 │   │   │
 │   │   └── __init__.py                  # Schema exports
 │   │
-│   ├── 📁 services/                    # Servis katmanı (13 dosya)
+│   ├── 📁 services/                    # Servis katmanı (14 dosya)
 │   │   ├── scraper_service.py           # Web scraping orchestrator
 │   │   │                                 # - Site detection
 │   │   │                                 # - Scraper selection
@@ -397,10 +543,11 @@ webtoon-ai-translator/
 │   │   │                                 # - Multiple chapter processing
 │   │   │                                 # - Sequential execution
 │   │   │
-│   │   └── translation_publisher.py     # Auto-publish translations
+│   │   └── translation_publisher.py     # Auto-publish translations (geliştirilmiş hata yönetimi)
 │   │                                     # - publish_translation_on_completion()
 │   │                                     # - ChapterTranslation creation
 │   │                                     # - Automatic publishing
+│   │                                     # - Transaction rollback ve dosya temizleme
 │   │
 │   └── 📁 __init__.py
 │
@@ -452,9 +599,32 @@ webtoon-ai-translator/
 │
 ├── 📄 SETUP.bat                        # İlk kurulum script'i
 │                                        # - Virtual environment
-│                                        # - Paket yükleme
+│                                        # - Temel paket yükleme
+│                                        # - Opsiyonel paket yükleme (Hugging Face, Argos, spaCy)
+│                                        # - spaCy model indirme
 │                                        # - .env oluşturma
 │                                        # - Klasör oluşturma
+│
+├── 📄 INSTALL_OPTIONAL.bat             # Sadece opsiyonel paketler
+│                                        # - Hugging Face Transformers
+│                                        # - Argos Translate
+│                                        # - spaCy + modeller
+│
+├── 📄 INSTALL_ALL.bat                  # Tam kurulum script'i
+│
+├── 📄 START.bat                        # Proje başlatma script'i
+│                                        # - Redis başlatma
+│                                        # - Celery Worker başlatma
+│                                        # - FastAPI başlatma
+│                                        # - Tarayıcıda API docs açma
+│
+├── 📄 STOP.bat                         # Tüm servisleri durdurma
+│
+├── 📄 RESTART.bat                      # Servisleri yeniden başlatma
+│
+├── 📄 CHECK.bat                        # Servis durumu kontrolü
+│
+├── 📄 README_INSTALLATION.md           # Detaylı kurulum rehberi
 │
 ├── 📄 GITHUB_DEPLOY.bat                # GitHub'a yükleme script'i
 │
@@ -470,6 +640,36 @@ webtoon-ai-translator/
 ---
 
 ## ⚡ **KISA ÖZELLİK ÖZETİ**
+
+### ✅ **Tag & Category Sistemi**
+- **200+ Webtoon Tag**: Genre tags (action, comedy, drama, vb.), webtoon-specific tags (system, return, rebirth, vb.), character tags, relationship tags
+- **Tag Enum**: `WebtoonTag` enum ile tüm tag'ler validate edilir
+- **Category System**: Ana kategori sistemi (Action, Romance, vb.)
+- **Tag Validation**: Geçersiz tag'ler otomatik atlanır, geçerli tag'ler normalize edilir
+- **Many-to-Many Relationship**: Seriler birden fazla tag'e sahip olabilir
+
+### ✅ **Seri Yönetimi ve Çakışma Çözümü**
+- **Akıllı Seri Bulma**: Aynı isimde seri varsa yeni oluşturmaz, mevcut seriyi kullanır
+- **Chapter Çakışma Yönetimi**: Aynı chapter number varsa yenisiyle değiştirilebilir veya korunabilir
+- **Translation Çakışma Yönetimi**: Aynı dil çifti varsa eski translation dosyaları silinir, yenisiyle değiştirilir
+- **Otomatik Seri Oluşturma**: Çeviri sırasında seri yoksa otomatik oluşturulur
+- **Transaction Rollback**: Hata durumunda otomatik rollback ve dosya temizleme
+- **Veri Bütünlüğü**: Veri kaybı önleme mekanizmaları
+
+### ✅ **Discovery Özellikleri**
+- **Trending Series**: Günlük/haftalık/aylık trending seriler
+- **Featured Series**: Admin seçili öne çıkan seriler
+- **Recommendations**: Kullanıcıya özel öneriler (okuma geçmişi, bookmark'lar, benzer türler)
+- **Popular Series**: Popüler seriler (görüntülenme sayısına göre)
+- **Newest Series**: En yeni seriler
+- **Genre List**: Mevcut türler ve sayıları
+
+### ✅ **Admin Content Management**
+- **Manuel Chapter Upload**: Admin'ler çeviri yaptırmadan direkt bölüm yükleyebilir
+- **Page Editing**: Spesifik sayfa düzenleme/yeniden yükleme
+- **Page Deletion**: Spesifik sayfa silme
+- **Page Reordering**: Sayfa sıralamasını yeniden düzenleme
+- **Bulk Publish**: Toplu bölüm yayınlama/yayından kaldırma
 
 ### ✅ **Çeviri Özellikleri**
 - ✅ Multi-site scraping (Webtoons.com, AsuraScans)
@@ -504,6 +704,8 @@ webtoon-ai-translator/
 - ✅ Query optimization (eager loading)
 - ✅ Database logging
 - ✅ Cache invalidation (aggressive)
+- ✅ **Offline çeviri desteği:** Hugging Face ve Argos Translate ile internet olmadan çeviri
+- ✅ **Otomatik fallback:** En iyi çeviri servisini otomatik seçme
 
 ### ✅ **Güvenlik & Monitoring**
 - ✅ JWT authentication
@@ -574,11 +776,24 @@ webtoon-ai-translator/
   "chapter_url": "string",
   "target_lang": "tr",
   "source_lang": "en",
-  "mode": "clean"
+  "mode": "clean",
+  "quality": "high",
+  "series_name": "Eleceed",
+  "translate_type": 1
 }
 ```
+**Request Parametreleri:**
+- `chapter_url`: Bölüm URL'si (zorunlu)
+- `target_lang`: Hedef dil kodu (default: "tr")
+- `source_lang`: Kaynak dil kodu (default: "en")
+- `mode`: İşleme modu - `"clean"` (temizleme) veya `"overlay"` (üzerine yazma) (default: "clean")
+- `quality`: Çeviri kalitesi - `"high"` (yüksek) veya `"fast"` (hızlı) (default: "high")
+- `series_name`: Seri adı (opsiyonel, dosya organizasyonu için)
+- `translate_type`: Çeviri tipi - `1` (AI/OpenAI GPT-4o-mini) veya `2` (Free/Google Translate) (default: 1)
+
 **Response:** Task ID
 **Kullanım:** Tek bölüm çevirisi başlatma
+**Not:** `translate_type=1` (AI) ücretlidir ama yüksek kalite, `translate_type=2` (Free) ücretsizdir ama kalite düşüktür. Free çeviride özel isim sözlüğü otomatik kullanılır.
 
 #### `GET /api/v1/translate/status/{task_id}`
 **Amaç:** Çeviri işleminin durumunu kontrol eder
@@ -604,9 +819,20 @@ webtoon-ai-translator/
   "source_lang": "en",
   "target_lang": "tr",
   "mode": "clean",
-  "series_name": "Eleceed"
+  "series_name": "Eleceed",
+  "translate_type": 1
 }
 ```
+**Request Parametreleri:**
+- `base_url`: URL pattern (bölüm numarası için `{}` placeholder)
+- `start_chapter`: Başlangıç bölüm numarası
+- `end_chapter`: Bitiş bölüm numarası
+- `source_lang`: Kaynak dil (default: "en")
+- `target_lang`: Hedef dil (default: "tr")
+- `mode`: İşleme modu (default: "clean")
+- `series_name`: Seri adı (opsiyonel)
+- `translate_type`: Çeviri tipi - `1` (AI) veya `2` (Free) (default: 1)
+
 **Response:** BatchTranslationResponse (task_id, total_chapters, chapters list)
 **Kullanım:** Ardışık bölüm aralığı çevirisi (1-10 gibi)
 
@@ -621,9 +847,19 @@ webtoon-ai-translator/
   "source_lang": "en",
   "target_lang": "tr",
   "mode": "clean",
-  "series_name": "Eleceed"
+  "series_name": "Eleceed",
+  "translate_type": 1
 }
 ```
+**Request Parametreleri:**
+- `series_url`: URL pattern (bölüm numarası için `{}` placeholder)
+- `chapter_range`: Bölüm aralığı (örn: "1-10", "5,7,9", "1-5,10-15")
+- `source_lang`: Kaynak dil (default: "en")
+- `target_lang`: Hedef dil (default: "tr")
+- `mode`: İşleme modu (default: "clean")
+- `series_name`: Seri adı (opsiyonel)
+- `translate_type`: Çeviri tipi - `1` (AI) veya `2` (Free) (default: 1)
+
 **Response:** BatchTranslationResponse
 **Kullanım:** Esnek bölüm seçimi (aralık, tek tek, karışık)
 **Özellik:** URL pattern otomatik algılama ve chapter numarası yerleştirme
@@ -658,6 +894,61 @@ webtoon-ai-translator/
 **Response:** Created series
 **Kullanım:** Admin seri ekleme
 
+#### `PUT /api/v1/series/{series_id}`
+**Amaç:** Seri güncelleme (Admin only)
+**Auth:** Required (Admin)
+**Request:** SeriesUpdate schema (partial update)
+**Response:** Updated series
+**Kullanım:** Seri metadata güncelleme
+**Özellikler:**
+- ✅ Partial update (sadece gönderilen alanlar güncellenir)
+- ✅ Cache otomatik invalidate edilir
+
+#### `DELETE /api/v1/series/{series_id}`
+**Amaç:** Seri silme (Admin only - Soft delete)
+**Auth:** Required (Admin)
+**Response:** Deletion confirmation
+**Kullanım:** Seri silme (soft delete: is_active=False, is_published=False)
+**Özellikler:**
+- ✅ Soft delete (veriler silinmez, sadece pasif edilir)
+- ✅ Cache otomatik invalidate edilir
+
+#### `PUT /api/v1/chapters/{chapter_id}`
+**Amaç:** Bölüm güncelleme (Admin only)
+**Auth:** Required (Admin)
+**Request:** ChapterCreate schema (partial update)
+**Response:** Updated chapter
+**Kullanım:** Bölüm metadata güncelleme
+**Özellikler:**
+- ✅ Partial update
+- ✅ series_id değiştirilemez
+- ✅ Cache otomatik invalidate edilir
+
+#### `DELETE /api/v1/chapters/{chapter_id}`
+**Amaç:** Bölüm silme (Admin only - Soft delete)
+**Auth:** Required (Admin)
+**Response:** Deletion confirmation
+**Kullanım:** Bölüm silme (soft delete: is_published=False)
+**Özellikler:**
+- ✅ Soft delete
+- ✅ Cache otomatik invalidate edilir
+
+#### `POST /api/v1/chapters/{chapter_id}/publish`
+**Amaç:** Bölüm yayınlama/yayından kaldırma (Admin only)
+**Auth:** Required (Admin)
+**Query Params:**
+- `publish`: true (yayınla) veya false (yayından kaldır)
+**Response:** Publish status
+**Kullanım:** Bölüm yayın durumu kontrolü
+
+#### `POST /api/v1/chapters/{chapter_id}/translations/{translation_id}/publish`
+**Amaç:** Translation yayınlama/yayından kaldırma (Admin only)
+**Auth:** Required (Admin)
+**Query Params:**
+- `publish`: true (yayınla) veya false (yayından kaldır)
+**Response:** Publish status
+**Kullanım:** Translation yayın durumu kontrolü
+
 #### `GET /api/v1/series/{series_id}/chapters`
 **Amaç:** Seriye ait bölüm listesi (public, cached)
 **Auth:** Optional
@@ -689,6 +980,15 @@ webtoon-ai-translator/
 **Cache:** 10 dakika (TTL: 600)
 
 #### `POST /api/v1/chapters/{chapter_id}/translate`
+**Amaç:** Premium kullanıcılar için bölüm çevirisi talep etme
+**Auth:** Required (Premium)
+**Query Params:**
+- `source_lang`: Kaynak dil (default: "en")
+- `target_lang`: Hedef dil (default: "tr")
+- `translate_type`: Çeviri tipi - `1` (AI) veya `2` (Free) (default: 1)
+**Response:** Task ID
+**Kullanım:** Premium kullanıcılar bölüm çevirisi talep edebilir
+**Not:** Aylık bölüm limiti kontrol edilir, aşılırsa ödeme gerekir
 **Amaç:** Bölüm için çeviri isteği (Premium)
 **Auth:** Required (Premium)
 **Query Params:** `target_lang` (string, required)
@@ -1215,6 +1515,101 @@ webtoon-ai-translator/
 
 ---
 
+### 🔍 **Discovery Endpoints** (`/api/v1/`)
+
+#### `GET /api/v1/series/trending`
+**Amaç:** Trending seriler (günlük/haftalık/aylık)
+**Auth:** None
+**Query Params:**
+- `skip`: Pagination offset
+- `limit`: Page size (max 50)
+- `period`: "day", "week", "month"
+**Response:** Trending series list
+**Kullanım:** Ana sayfa trending bölümü
+**Cache:** 1 saat
+
+#### `GET /api/v1/series/featured`
+**Amaç:** Öne çıkan seriler (admin-selected)
+**Auth:** None
+**Query Params:**
+- `skip`: Pagination offset
+- `limit`: Page size (max 50)
+**Response:** Featured series list
+**Kullanım:** Ana sayfa featured bölümü
+**Cache:** 30 dakika
+
+#### `GET /api/v1/series/recommendations`
+**Amaç:** Kullanıcıya özel öneriler
+**Auth:** Optional (guest için popüler seriler)
+**Query Params:**
+- `skip`: Pagination offset
+- `limit`: Page size (max 50)
+**Response:** Recommended series list
+**Kullanım:** Kişiselleştirilmiş öneriler
+**Özellikler:**
+- ✅ Authenticated users: Okuma geçmişi ve bookmark'lara göre öneriler
+- ✅ Guest users: Popüler seriler
+**Cache:** 30 dakika (kullanıcı bazlı)
+
+#### `GET /api/v1/series/popular`
+**Amaç:** Popüler seriler (görüntülenme sayısına göre)
+**Auth:** None
+**Query Params:**
+- `skip`: Pagination offset
+- `limit`: Page size (max 50)
+- `period`: "day", "week", "month", "all"
+**Response:** Popular series list
+**Kullanım:** Popüler seriler sayfası
+**Cache:** 1 saat
+
+#### `GET /api/v1/series/newest`
+**Amaç:** En yeni seriler
+**Auth:** None
+**Query Params:**
+- `skip`: Pagination offset
+- `limit`: Page size (max 50)
+**Response:** Newest series list
+**Kullanım:** Yeni seriler sayfası
+**Cache:** 10 dakika
+
+#### `GET /api/v1/tags`
+**Amaç:** Tüm mevcut tag'leri listele
+**Auth:** None
+**Response:**
+```json
+{
+  "all_tags": ["action", "comedy", "system", "return", ...],
+  "genre_tags": ["action", "comedy", "drama", ...],
+  "webtoon_specific_tags": ["system", "return", "rebirth", ...],
+  "total_count": 200
+}
+```
+**Kullanım:** Tag seçimi için dropdown/liste
+**Cache:** 24 saat
+
+#### `GET /api/v1/tags/validate`
+**Amaç:** Tag isimlerini validate et
+**Auth:** None
+**Query Params:**
+- `tag_names`: List of tag names (comma-separated veya query array)
+**Response:**
+```json
+{
+  "valid_tags": [
+    {"original": "comedy", "normalized": "comedy", "valid": true},
+    {"original": "aksiyon", "normalized": "action", "valid": true}
+  ],
+  "invalid_tags": [
+    {"original": "invalid-tag", "valid": false}
+  ],
+  "total_valid": 2,
+  "total_invalid": 1
+}
+```
+**Kullanım:** Tag validation, frontend'de tag seçimi
+
+---
+
 ### ⚙️ **Site Settings Endpoints** (`/api/v1/settings`)
 
 #### `GET /api/v1/settings`
@@ -1285,8 +1680,12 @@ webtoon-ai-translator/
 - ✅ System statistics
 - ✅ Log viewing
 - ✅ Site settings update
+- ✅ Manual chapter upload
+- ✅ Page editing/deletion/reordering
+- ✅ Bulk chapter publish/unpublish
+- ✅ Series/Chapter/Translation management (CRUD)
 
-**TOPLAM: 50+ endpoint** 🎉
+**TOPLAM: 75+ endpoint** 🎉
 
 ### 📊 **Endpoint İstatistikleri**
 
@@ -1323,4 +1722,212 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ---
 
 **Son Güncelleme:** January 6, 2026
+
+---
+
+## 🆕 **YENİ EKLENEN ÖZELLİKLER (Son Güncelleme)**
+
+### 🏷️ **Tag & Category Sistemi**
+
+#### WebtoonTag Enum
+- **200+ Tag**: Tüm webtoon tag'leri enum olarak tanımlanmış
+- **Kategoriler:**
+  - **Genre Tags** (14): action, adventure, comedy, drama, fantasy, horror, mystery, romance, sci-fi, slice-of-life, sports, supernatural, thriller, western
+  - **Webtoon-Specific Tags**: system, return, rebirth, regression, transmigration-novel, villainess, duke-of-the-north, magic, mana, cultivation, martial-arts, leveling, game-elements, status-window, skills, evolution, dungeon, tower, gate, portal, isekai, alternate-world, parallel-world
+  - **Character Tags**: strong-female-lead, op-main-character, weak-to-strong, reincarnation, transmigration, time-travel
+  - **Relationship Tags**: harem, reverse-harem, love-triangle, yaoi, yuri, bl, gl, shoujo, shounen, seinen, josei
+  - **Story Tags**: revenge, redemption, betrayal, academy, guild, adventurer, merchant, noble, royalty
+  - **Modern Tags**: ceo, contract-marriage, arranged-marriage, enemies-to-lovers, secret-identity
+  - **Power Tags**: overpowered, cheat, unique-skill, legendary
+  - Ve daha fazlası...
+
+#### Tag Validation
+- Tag'ler enum'dan validate edilir
+- Geçersiz tag'ler otomatik atlanır
+- Tag isimleri normalize edilir (büyük/küçük harf, özel karakterler)
+
+#### Endpoint'ler
+- `GET /api/v1/tags` - Tüm tag'leri listele
+- `GET /api/v1/tags/validate?tag_names=comedy,action` - Tag'leri validate et
+
+---
+
+### 📚 **Seri Yönetimi ve Otomatik Çeviri Akışı**
+
+#### SeriesManager Service
+**Lokasyon:** `app/services/series_manager.py`
+
+**Özellikler:**
+- `create_or_get_series()`: Seri bulma/oluşturma
+  - Aynı isimde seri varsa: Mevcut seriyi kullanır (yeni oluşturmaz)
+  - Aynı isimde seri yoksa: Yeni seri oluşturulur
+  - Normalize edilmiş isim eşleştirme (büyük/küçük harf, özel karakterler)
+- `create_or_update_chapter()`: Chapter oluşturma/güncelleme
+  - Chapter number çakışması yönetimi
+  - `replace_existing=True`: Aynı chapter number varsa yenisiyle değiştir
+  - `replace_existing=False`: Aynı chapter number varsa eski korunur
+- `handle_chapter_conflict()`: Translation çakışma çözümü
+  - Aynı dil çifti varsa: Eski translation dosyaları silinir, yenisiyle değiştirilir
+  - Aynı dil çifti yoksa: Yeni translation oluşturulur
+
+#### Otomatik Seri Oluşturma
+**Lokasyon:** `app/operations/translation_publisher.py`
+
+**Akış:**
+1. Çeviri tamamlandığında `publish_translation_on_completion()` çağrılır
+2. Seri kontrolü: Aynı isimde seri varsa kullanılır, yoksa oluşturulur
+3. Chapter kontrolü: Chapter number URL'den otomatik çıkarılır, çakışma yönetilir
+4. Translation kontrolü: Aynı translation varsa yenisiyle değiştirilir
+5. Hata yönetimi: Transaction rollback ve dosya temizleme
+
+**Detaylı akış:** `DOC/SERIES_CREATION_FLOW.md` dosyasına bakın.
+
+---
+
+### 🔍 **Discovery Özellikleri**
+
+#### Yeni Endpoint'ler
+- `GET /api/v1/series/trending` - Trending seriler (günlük/haftalık/aylık)
+- `GET /api/v1/series/featured` - Öne çıkan seriler (admin-selected)
+- `GET /api/v1/series/recommendations` - Kullanıcıya özel öneriler
+- `GET /api/v1/series/popular` - Popüler seriler
+- `GET /api/v1/series/newest` - En yeni seriler
+- `GET /api/v1/tags` - Tüm tag'leri listele
+- `GET /api/v1/tags/validate` - Tag validation
+
+**Özellikler:**
+- ✅ Redis cache desteği (TTL: 600-3600 saniye)
+- ✅ Kullanıcı bazlı öneriler (okuma geçmişi ve bookmark'lara göre)
+- ✅ Guest kullanıcılar için popüler seriler
+
+---
+
+### 🔧 **Admin Content Management**
+
+#### Yeni Endpoint'ler
+- `POST /api/v1/admin/chapters/upload` - Manuel bölüm yükleme
+- `PUT /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa düzenleme
+- `DELETE /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa silme
+- `POST /api/v1/admin/chapters/{chapter_id}/pages/reorder` - Sayfa sıralama
+- `POST /api/v1/admin/series/{series_id}/chapters/bulk-publish` - Toplu yayınlama
+
+**Özellikler:**
+- ✅ Çeviri yaptırmadan direkt dosya yükleme
+- ✅ Sayfa seviyesinde düzenleme
+- ✅ Toplu işlemler
+- ✅ Otomatik cache invalidation
+
+---
+
+### 🔒 **Güvenlik ve Veri Bütünlüğü İyileştirmeleri**
+
+1. ✅ **Transaction Rollback**: Herhangi bir hata durumunda tüm değişiklikler geri alınır
+2. ✅ **Dosya Temizleme**: Hata durumunda kaydedilen dosyalar otomatik silinir
+3. ✅ **Veri Kaybı Önleme**: Chapter/translation çakışmalarında eski veriler korunur veya güvenli şekilde değiştirilir
+4. ✅ **Validation**: Tag'ler enum'dan validate edilir, geçersiz tag'ler atlanır
+5. ✅ **Seri Description Zorunluluğu**: Seri oluştururken description zorunludur
+
+---
+
+## 🆕 **YENİ EKLENEN ÖZELLİKLER (Son Güncelleme)**
+
+### 🏷️ **Tag & Category Sistemi**
+
+#### WebtoonTag Enum
+- **200+ Tag**: Tüm webtoon tag'leri enum olarak tanımlanmış
+- **Kategoriler:**
+  - **Genre Tags** (14): action, adventure, comedy, drama, fantasy, horror, mystery, romance, sci-fi, slice-of-life, sports, supernatural, thriller, western
+  - **Webtoon-Specific Tags**: system, return, rebirth, regression, transmigration-novel, villainess, duke-of-the-north, magic, mana, cultivation, martial-arts, leveling, game-elements, status-window, skills, evolution, dungeon, tower, gate, portal, isekai, alternate-world, parallel-world
+  - **Character Tags**: strong-female-lead, op-main-character, weak-to-strong, reincarnation, transmigration, time-travel
+  - **Relationship Tags**: harem, reverse-harem, love-triangle, yaoi, yuri, bl, gl, shoujo, shounen, seinen, josei
+  - **Story Tags**: revenge, redemption, betrayal, academy, guild, adventurer, merchant, noble, royalty
+  - **Modern Tags**: ceo, contract-marriage, arranged-marriage, enemies-to-lovers, secret-identity
+  - **Power Tags**: overpowered, cheat, unique-skill, legendary
+  - Ve daha fazlası...
+
+#### Tag Validation
+- Tag'ler enum'dan validate edilir
+- Geçersiz tag'ler otomatik atlanır
+- Tag isimleri normalize edilir (büyük/küçük harf, özel karakterler)
+
+#### Endpoint'ler
+- `GET /api/v1/tags` - Tüm tag'leri listele
+- `GET /api/v1/tags/validate?tag_names=comedy,action` - Tag'leri validate et
+
+---
+
+### 📚 **Seri Yönetimi ve Otomatik Çeviri Akışı**
+
+#### SeriesManager Service
+**Lokasyon:** `app/services/series_manager.py`
+
+**Özellikler:**
+- `create_or_get_series()`: Seri bulma/oluşturma
+  - Aynı isimde seri varsa: Mevcut seriyi kullanır (yeni oluşturmaz)
+  - Aynı isimde seri yoksa: Yeni seri oluşturulur
+  - Normalize edilmiş isim eşleştirme (büyük/küçük harf, özel karakterler)
+- `create_or_update_chapter()`: Chapter oluşturma/güncelleme
+  - Chapter number çakışması yönetimi
+  - `replace_existing=True`: Aynı chapter number varsa yenisiyle değiştir
+  - `replace_existing=False`: Aynı chapter number varsa eski korunur
+- `handle_chapter_conflict()`: Translation çakışma çözümü
+  - Aynı dil çifti varsa: Eski translation dosyaları silinir, yenisiyle değiştirilir
+  - Aynı dil çifti yoksa: Yeni translation oluşturulur
+
+#### Otomatik Seri Oluşturma
+**Lokasyon:** `app/operations/translation_publisher.py`
+
+**Akış:**
+1. Çeviri tamamlandığında `publish_translation_on_completion()` çağrılır
+2. Seri kontrolü: Aynı isimde seri varsa kullanılır, yoksa oluşturulur
+3. Chapter kontrolü: Chapter number URL'den otomatik çıkarılır, çakışma yönetilir
+4. Translation kontrolü: Aynı translation varsa yenisiyle değiştirilir
+5. Hata yönetimi: Transaction rollback ve dosya temizleme
+
+**Detaylı akış:** `DOC/SERIES_CREATION_FLOW.md` dosyasına bakın.
+
+---
+
+### 🔍 **Discovery Özellikleri**
+
+#### Yeni Endpoint'ler
+- `GET /api/v1/series/trending` - Trending seriler (günlük/haftalık/aylık)
+- `GET /api/v1/series/featured` - Öne çıkan seriler (admin-selected)
+- `GET /api/v1/series/recommendations` - Kullanıcıya özel öneriler
+- `GET /api/v1/series/popular` - Popüler seriler
+- `GET /api/v1/series/newest` - En yeni seriler
+- `GET /api/v1/tags` - Tüm tag'leri listele
+- `GET /api/v1/tags/validate` - Tag validation
+
+**Özellikler:**
+- ✅ Redis cache desteği (TTL: 600-3600 saniye)
+- ✅ Kullanıcı bazlı öneriler (okuma geçmişi ve bookmark'lara göre)
+- ✅ Guest kullanıcılar için popüler seriler
+
+---
+
+### 🔧 **Admin Content Management**
+
+#### Yeni Endpoint'ler
+- `POST /api/v1/admin/chapters/upload` - Manuel bölüm yükleme
+- `PUT /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa düzenleme
+- `DELETE /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa silme
+- `POST /api/v1/admin/chapters/{chapter_id}/pages/reorder` - Sayfa sıralama
+- `POST /api/v1/admin/series/{series_id}/chapters/bulk-publish` - Toplu yayınlama
+
+**Özellikler:**
+- ✅ Çeviri yaptırmadan direkt dosya yükleme
+- ✅ Sayfa seviyesinde düzenleme
+- ✅ Toplu işlemler
+- ✅ Otomatik cache invalidation
+
+---
+
+### 🔒 **Güvenlik ve Veri Bütünlüğü İyileştirmeleri**
+
+1. ✅ **Transaction Rollback**: Herhangi bir hata durumunda tüm değişiklikler geri alınır
+2. ✅ **Dosya Temizleme**: Hata durumunda kaydedilen dosyalar otomatik silinir
+3. ✅ **Veri Kaybı Önleme**: Chapter/translation çakışmalarında eski veriler korunur veya güvenli şekilde değiştirilir
+4. ✅ **Validation**: Tag'ler enum'dan validate edilir, geçersiz tag'ler atlanır
+5. ✅ **Seri Description Zorunluluğu**: Seri oluştururken description zorunludur
 

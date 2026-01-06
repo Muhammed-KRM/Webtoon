@@ -4,7 +4,7 @@ echo Webtoon AI Translator - Setup Script
 echo ========================================
 echo.
 
-echo [1/5] Sanal ortam oluşturuluyor...
+echo [1/8] Sanal ortam oluşturuluyor...
 python -m venv venv
 if errorlevel 1 (
     echo HATA: Python bulunamadı! Python 3.10+ yüklü olduğundan emin olun.
@@ -12,10 +12,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [2/5] Sanal ortam aktif ediliyor...
+echo [2/8] Sanal ortam aktif ediliyor...
 call venv\Scripts\activate.bat
 
-echo [3/5] Paketler yükleniyor...
+echo [3/8] Temel paketler yükleniyor...
 pip install --upgrade pip
 pip install -r requirements.txt
 if errorlevel 1 (
@@ -24,7 +24,31 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [4/5] .env dosyası kontrol ediliyor...
+echo [4/8] Opsiyonel paketler yükleniyor (Hugging Face, Argos, spaCy)...
+pip install transformers==4.36.2 torch==2.1.2 argostranslate==1.9.0 spacy==3.7.2 --quiet
+if errorlevel 1 (
+    echo UYARI: Bazı opsiyonel paketler yüklenemedi (sistem yine de çalışır)
+) else (
+    echo Opsiyonel paketler yüklendi.
+)
+
+echo [5/8] spaCy İngilizce modeli indiriliyor...
+python -m spacy download en_core_web_sm --quiet
+if errorlevel 1 (
+    echo UYARI: spaCy modeli indirilemedi (regex fallback kullanılacak)
+) else (
+    echo spaCy modeli indirildi.
+)
+
+echo [6/8] Argos Translate paketleri hazırlanıyor...
+python -c "import argostranslate.package; argostranslate.package.update_package_index(); print('Argos Translate hazir')" 2>nul
+if errorlevel 1 (
+    echo INFO: Argos Translate ilk kullanımda paketleri indirecek
+) else (
+    echo Argos Translate hazir.
+)
+
+echo [7/8] .env dosyası kontrol ediliyor...
 if not exist .env (
     echo .env dosyası bulunamadı, .env.example'dan kopyalanıyor...
     copy .env.example .env
@@ -42,7 +66,7 @@ if not exist .env (
     echo .env dosyasi mevcut.
 )
 
-echo [5/5] Klasorler olusturuluyor...
+echo [8/8] Klasorler olusturuluyor...
 if not exist storage mkdir storage
 if not exist cache mkdir cache
 if not exist fonts mkdir fonts
@@ -52,12 +76,21 @@ echo ========================================
 echo Kurulum tamamlandi!
 echo ========================================
 echo.
+echo Kurulu paketler:
+echo - Temel paketler (FastAPI, Celery, Redis, vb.)
+echo - Opsiyonel: Hugging Face Transformers (offline AI çeviri)
+echo - Opsiyonel: Argos Translate (offline ücretsiz çeviri)
+echo - Opsiyonel: spaCy (gelişmiş özel isim tespiti)
+echo.
+echo Sistem otomatik olarak en iyi çeviri servisini seçecek:
+echo 1. Hugging Face (varsa) - En kaliteli, offline
+echo 2. Argos Translate (varsa) - Hızlı, offline
+echo 3. Google Translate (her zaman) - Online, ücretsiz
+echo.
 echo Sonraki adimlar:
 echo 1. .env dosyasini duzenleyin
 echo 2. OpenAI API key ekleyin (DOC/API_KEY_REHBERI.md)
-echo 3. Redis'i baslatin (docker run -d -p 6379:6379 redis)
-echo 4. Celery worker'i baslatin (celery -A app.operations.translation_manager.celery_app worker --loglevel=info --pool=solo)
-echo 5. FastAPI'yi baslatin (uvicorn main:app --reload)
+echo 3. START.bat ile projeyi baslatin
 echo.
 pause
 

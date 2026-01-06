@@ -56,7 +56,7 @@ def create_payment_intent(
             amount=amount,
             chapter_count=payment_data.chapter_count,
             payment_method=payment_data.payment_method,
-            status="pending",
+            status=PaymentStatus.PENDING,
             transaction_id=payment_intent.get("payment_intent_id")
         )
         db.add(payment)
@@ -112,7 +112,7 @@ def confirm_payment(
             )
         
         # Update payment status
-        payment.status = "completed"
+        payment.status = PaymentStatus.COMPLETED
         db.commit()
         
         # Update subscription (add chapters)
@@ -163,7 +163,7 @@ async def stripe_webhook(
                 ).first()
                 
                 if payment:
-                    payment.status = "completed"
+                    payment.status = PaymentStatus.COMPLETED
                     db.commit()
                     
                     # Update subscription

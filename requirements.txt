@@ -35,12 +35,12 @@ easyocr==1.7.1
 # Translation
 openai==1.12.0
 deep-translator==1.11.4  # Free translation service (Google Translate, DeepL free tier)
-argostranslate==1.9.0  # Free offline translation (Argos Translate)
-transformers==4.36.2  # Hugging Face models for translation
-torch==2.1.2  # PyTorch for transformers (CPU version)
+argostranslate==1.9.0  # Free offline translation (Argos Translate) - OPTIONAL
+transformers==4.36.2  # Hugging Face models for translation - OPTIONAL
+torch==2.1.2  # PyTorch for transformers (CPU version) - OPTIONAL
 
 # NER (Named Entity Recognition)
-spacy==3.7.2  # Professional NER library
+spacy==3.7.2  # Professional NER library - OPTIONAL
 # Note: After installing, run: python -m spacy download en_core_web_sm
 # For Turkish: python -m spacy download tr_core_news_sm (if available)
 

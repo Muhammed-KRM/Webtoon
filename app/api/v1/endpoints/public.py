@@ -47,6 +47,7 @@ def list_series_public(
         
         # Status filter
         if status:
+            # status is already validated as SeriesStatus enum value
             query = query.filter(Series.status == status)
         
         # Sorting
@@ -150,7 +151,7 @@ def get_chapter_detail_public(chapter_id: int, db: Session = Depends(get_db)):
         translations = db.query(ChapterTranslation).filter(
             ChapterTranslation.chapter_id == chapter_id,
             ChapterTranslation.is_published == True,
-            ChapterTranslation.status == "completed"
+            ChapterTranslation.status == TranslationStatus.COMPLETED
         ).all()
         
         # Get comments count
@@ -232,7 +233,7 @@ def read_chapter_public(
             ChapterTranslation.id == translation_id,
             ChapterTranslation.chapter_id == chapter_id,
             ChapterTranslation.is_published == True,
-            ChapterTranslation.status == "completed"
+            ChapterTranslation.status == TranslationStatus.COMPLETED
         ).first()
         
         if not translation:

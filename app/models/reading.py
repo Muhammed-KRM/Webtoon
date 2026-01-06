@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, F
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.core.enums import NotificationType
 
 
 class ReadingHistory(Base):
@@ -84,7 +85,7 @@ class Notification(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    type = Column(String, nullable=False)  # translation_completed, new_chapter, comment_reply, etc.
+    type = Column(String, nullable=False)  # translation_completed, new_chapter, comment_reply, etc. (use NotificationType enum)
     title = Column(String, nullable=False)
     message = Column(String, nullable=False)
     link = Column(String, nullable=True)  # URL to related content

@@ -4,6 +4,7 @@ Series Dictionary Model - Special names glossary for translation consistency
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Index, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+from app.core.enums import ProperNounType
 
 
 class SeriesDictionary(Base):
@@ -36,7 +37,7 @@ class DictionaryEntry(Base):
     original_name = Column(String, nullable=False)  # Original name in source language
     translated_name = Column(String, nullable=False)  # Translated name in target language
     usage_count = Column(Integer, default=1)  # How many times this name was used
-    is_proper_noun = Column(String, default="auto")  # auto, yes, no - detected or manual
+    is_proper_noun = Column(String, default=ProperNounType.AUTO)  # auto, yes, no - detected or manual
     last_used_at = Column(DateTime(timezone=True), server_default=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

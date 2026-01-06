@@ -10,10 +10,12 @@ class SeriesBase(BaseModel):
     """Base series schema"""
     title: str
     title_original: Optional[str] = None
-    description: Optional[str] = None
+    description: str  # Required - series must have description
     cover_image_url: Optional[str] = None
     author: Optional[str] = None
-    genre: Optional[str] = None
+    genre: Optional[str] = None  # Legacy field
+    category_id: Optional[int] = None  # New category relationship
+    tags: Optional[List[str]] = None  # List of tag names (e.g., ["comedy", "action"])
     source_url: Optional[str] = None
     source_site: Optional[str] = None
 
@@ -30,6 +32,8 @@ class SeriesUpdate(BaseModel):
     cover_image_url: Optional[str] = None
     status: Optional[str] = None
     is_featured: Optional[bool] = None
+    category_id: Optional[int] = None
+    tags: Optional[List[str]] = None
 
 
 class SeriesResponse(SeriesBase):
@@ -41,6 +45,7 @@ class SeriesResponse(SeriesBase):
     view_count: int
     rating: int
     rating_count: int
+    category_id: Optional[int] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     
@@ -89,4 +94,3 @@ class ChapterTranslationResponse(BaseModel):
     
     class Config:
         from_attributes = True
-

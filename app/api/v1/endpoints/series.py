@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_
 from typing import Optional, List
+from datetime import datetime
 from app.core.database import get_db
 from app.core.security import get_current_active_user, require_admin
 from app.schemas.series import (
@@ -19,7 +20,7 @@ from app.services.file_manager import FileManager
 from app.services.api_cache import api_cache
 from app.core.query_optimizer import QueryOptimizer
 from app.core.cache_invalidation import CacheInvalidation
-from app.core.enums import TranslateType
+from app.core.enums import TranslateType, TranslationStatus, SeriesStatus
 from sqlalchemy.orm import joinedload, selectinload
 
 router = APIRouter()
@@ -72,6 +73,7 @@ def list_series(
         
         # Status filter
         if status:
+            # status is already validated as SeriesStatus enum value
             query = query.filter(Series.status == status)
         
         # Get total count
@@ -153,22 +155,121 @@ def create_series(
 ):
     """Create a new series (Admin only)"""
     try:
-        new_series = Series(**series_data.model_dump())
-        db.add(new_series)
-        db.commit()
-        db.refresh(new_series)
+        from app.services.series_manager import SeriesManager
+        
+        # Validate description
+        if not series_data.description or not series_data.description.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Series description is required"
+            )
+        
+        # Use SeriesManager to create or get series (handles duplicates)
+        series, is_new = SeriesManager.create_or_get_series(
+            db=db,
+            title=series_data.title,
+            description=series_data.description,
+            source_url=series_data.source_url,
+            source_site=series_data.source_site,
+            author=series_data.author,
+            cover_image_url=series_data.cover_image_url,
+            category_id=series_data.category_id,
+            tags=series_data.tags,
+            genre=series_data.genre
+        )
         
         # Invalidate cache
         CacheInvalidation.invalidate_series_cache()
         
+        message = "Series created successfully" if is_new else "Series already exists, updated metadata"
+        
         return BaseResponse.success_response(
-            SeriesResponse.model_validate(new_series),
-            "Series created successfully"
+            SeriesResponse.model_validate(series),
+            message
         )
+    except HTTPException:
+        raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating series: {str(e)}"
+        )
+
+
+@router.put("/series/{series_id}", response_model=BaseResponse[SeriesResponse])
+def update_series(
+    series_id: int,
+    series_data: SeriesUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Update a series (Admin only)"""
+    try:
+        series = db.query(Series).filter(Series.id == series_id).first()
+        if not series:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Series not found"
+            )
+        
+        # Update fields
+        update_data = series_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(series, field, value)
+        
+        db.commit()
+        db.refresh(series)
+        
+        # Invalidate cache
+        CacheInvalidation.invalidate_series_cache(series_id)
+        
+        return BaseResponse.success_response(
+            SeriesResponse.model_validate(series),
+            "Series updated successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating series: {str(e)}"
+        )
+
+
+@router.delete("/series/{series_id}", response_model=BaseResponse[dict])
+def delete_series(
+    series_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Delete a series (Admin only) - Soft delete by setting is_active=False"""
+    try:
+        series = db.query(Series).filter(Series.id == series_id).first()
+        if not series:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Series not found"
+            )
+        
+        # Soft delete
+        series.is_active = False
+        series.is_published = False
+        db.commit()
+        
+        # Invalidate cache
+        CacheInvalidation.invalidate_series_cache(series_id)
+        
+        return BaseResponse.success_response(
+            {"series_id": series_id, "deleted": True},
+            "Series deleted successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting series: {str(e)}"
         )
 
 
@@ -241,7 +342,7 @@ def get_chapter_translations(
         query = db.query(ChapterTranslation).filter(
             ChapterTranslation.chapter_id == chapter_id,
             ChapterTranslation.is_published == True,
-            ChapterTranslation.status == "completed"
+            ChapterTranslation.status == TranslationStatus.COMPLETED
         )
         
         if source_lang:
@@ -306,7 +407,7 @@ def request_chapter_translation(
         existing = db.query(ChapterTranslation).filter(
             ChapterTranslation.chapter_id == chapter_id,
             ChapterTranslation.target_lang == target_lang,
-            ChapterTranslation.status == "completed"
+            ChapterTranslation.status == TranslationStatus.COMPLETED
         ).first()
         
         if existing:
@@ -381,5 +482,167 @@ def request_chapter_translation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error requesting translation: {str(e)}"
+        )
+
+
+@router.put("/chapters/{chapter_id}", response_model=BaseResponse[ChapterResponse])
+def update_chapter(
+    chapter_id: int,
+    chapter_data: ChapterCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Update a chapter (Admin only)"""
+    try:
+        chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not chapter:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chapter not found"
+            )
+        
+        # Update fields
+        update_data = chapter_data.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            if field != "series_id":  # Don't allow changing series_id
+                setattr(chapter, field, value)
+        
+        db.commit()
+        db.refresh(chapter)
+        
+        # Invalidate cache
+        CacheInvalidation.invalidate_chapter_cache(chapter_id)
+        CacheInvalidation.invalidate_series_cache(chapter.series_id)
+        
+        return BaseResponse.success_response(
+            ChapterResponse.model_validate(chapter),
+            "Chapter updated successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating chapter: {str(e)}"
+        )
+
+
+@router.delete("/chapters/{chapter_id}", response_model=BaseResponse[dict])
+def delete_chapter(
+    chapter_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Delete a chapter (Admin only) - Soft delete by setting is_published=False"""
+    try:
+        chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not chapter:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chapter not found"
+            )
+        
+        # Soft delete
+        chapter.is_published = False
+        db.commit()
+        
+        # Invalidate cache
+        CacheInvalidation.invalidate_chapter_cache(chapter_id)
+        CacheInvalidation.invalidate_series_cache(chapter.series_id)
+        
+        return BaseResponse.success_response(
+            {"chapter_id": chapter_id, "deleted": True},
+            "Chapter deleted successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting chapter: {str(e)}"
+        )
+
+
+@router.post("/chapters/{chapter_id}/publish", response_model=BaseResponse[dict])
+def publish_chapter(
+    chapter_id: int,
+    publish: bool = Query(True, description="True to publish, False to unpublish"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Publish or unpublish a chapter (Admin only)"""
+    try:
+        chapter = db.query(Chapter).filter(Chapter.id == chapter_id).first()
+        if not chapter:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Chapter not found"
+            )
+        
+        chapter.is_published = publish
+        if publish:
+            chapter.published_at = datetime.utcnow()
+        db.commit()
+        
+        # Invalidate cache
+        CacheInvalidation.invalidate_chapter_cache(chapter_id)
+        CacheInvalidation.invalidate_series_cache(chapter.series_id)
+        
+        return BaseResponse.success_response(
+            {
+                "chapter_id": chapter_id,
+                "is_published": publish
+            },
+            f"Chapter {'published' if publish else 'unpublished'} successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating chapter publish status: {str(e)}"
+        )
+
+
+@router.post("/chapters/{chapter_id}/translations/{translation_id}/publish", response_model=BaseResponse[dict])
+def publish_translation(
+    chapter_id: int,
+    translation_id: int,
+    publish: bool = Query(True, description="True to publish, False to unpublish"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Publish or unpublish a translation (Admin only)"""
+    try:
+        translation = db.query(ChapterTranslation).filter(
+            ChapterTranslation.id == translation_id,
+            ChapterTranslation.chapter_id == chapter_id
+        ).first()
+        
+        if not translation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Translation not found"
+            )
+        
+        translation.is_published = publish
+        db.commit()
+        
+        # Invalidate cache
+        CacheInvalidation.invalidate_chapter_cache(chapter_id)
+        
+        return BaseResponse.success_response(
+            {
+                "translation_id": translation_id,
+                "is_published": publish
+            },
+            f"Translation {'published' if publish else 'unpublished'} successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating translation publish status: {str(e)}"
         )
 

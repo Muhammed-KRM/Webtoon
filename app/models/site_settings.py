@@ -4,6 +4,7 @@ Site Settings Model - Site configuration and theme
 from sqlalchemy import Column, Integer, String, Text, JSON, Boolean, DateTime
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.core.enums import Theme
 
 
 class SiteSettings(Base):
@@ -14,7 +15,7 @@ class SiteSettings(Base):
     site_name = Column(String, default="Webtoon AI Translator")
     site_description = Column(Text, nullable=True)
     site_logo_url = Column(String, nullable=True)
-    theme = Column(String, default="light")  # light, dark, auto
+    theme = Column(String, default=Theme.LIGHT)  # light, dark, auto
     primary_color = Column(String, default="#007bff")
     secondary_color = Column(String, default="#6c757d")
     maintenance_mode = Column(Boolean, default=False)

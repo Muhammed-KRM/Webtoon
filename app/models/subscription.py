@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, N
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.core.enums import PlanType, PaymentStatus
 
 
 class Subscription(Base):
@@ -13,7 +14,7 @@ class Subscription(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
-    plan_type = Column(String, nullable=False)  # premium, basic, free
+    plan_type = Column(String, nullable=False, default=PlanType.FREE)  # premium, basic, free
     monthly_chapter_limit = Column(Integer, default=0)  # 0 = unlimited
     used_chapters_this_month = Column(Integer, default=0)
     price_per_extra_chapter = Column(Numeric(10, 2), default=0.50)  # Price in USD
@@ -37,7 +38,7 @@ class Payment(Base):
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String, default="USD")
     chapter_count = Column(Integer, nullable=False)  # Number of chapters purchased
-    status = Column(String, default="pending")  # pending, completed, failed
+    status = Column(String, default=PaymentStatus.PENDING)  # pending, completed, failed
     payment_method = Column(String, nullable=True)  # stripe, paypal, etc.
     transaction_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

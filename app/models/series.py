@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, JSON, F
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.core.enums import SeriesStatus, TranslationStatus
 
 
 class Series(Base):
@@ -14,11 +15,12 @@ class Series(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, index=True)
     title_original = Column(String, nullable=True)
-    description = Column(Text, nullable=True)
+    description = Column(Text, nullable=False)  # Made required - series must have description
     cover_image_url = Column(String, nullable=True)
     author = Column(String, nullable=True)
-    genre = Column(String, nullable=True)
-    status = Column(String, default="ongoing")  # ongoing, completed, hiatus
+    genre = Column(String, nullable=True)  # Legacy field - kept for backward compatibility
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True, index=True)  # New category relationship
+    status = Column(String, default=SeriesStatus.ONGOING)  # ongoing, completed, hiatus
     source_url = Column(String, nullable=True)  # Original source URL
     source_site = Column(String, nullable=True)  # webtoons.com, asurascans.com.tr
     is_active = Column(Boolean, default=True)
@@ -34,6 +36,8 @@ class Series(Base):
     # Relationships
     chapters = relationship("Chapter", back_populates="series", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="series", cascade="all, delete-orphan")
+    category = relationship("Category", back_populates="series")
+    tags = relationship("Tag", secondary="series_tags", back_populates="series")
 
 
 class Chapter(Base):
@@ -70,7 +74,7 @@ class ChapterTranslation(Base):
     storage_path = Column(String, nullable=False)  # Path to translated images
     page_count = Column(Integer, default=0)
     translation_job_id = Column(String, nullable=True)  # Celery task ID
-    status = Column(String, default="pending")  # pending, processing, completed, failed
+    status = Column(String, default=TranslationStatus.PENDING)  # pending, processing, completed, failed
     is_published = Column(Boolean, default=False)
     view_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

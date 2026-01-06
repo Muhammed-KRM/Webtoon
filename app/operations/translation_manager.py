@@ -6,7 +6,7 @@ from celery.result import AsyncResult
 import base64
 import asyncio
 from typing import Dict, Any, Optional
-from datetime import datetime, Optional
+from datetime import datetime
 from loguru import logger
 from app.core.config import settings
 from app.services.scraper_service import ScraperService
@@ -17,7 +17,7 @@ from app.services.ner_service import NERService
 from app.services.advanced_ner_service import AdvancedNERService
 from app.services.alternative_translator import AlternativeTranslator
 from app.services.dictionary_service import DictionaryService
-from app.core.enums import TranslateType
+from app.core.enums import TranslateType, TranslationMode
 from app.services.image_processor import ImageProcessor
 from app.services.cache_service import CacheService
 from app.core.metrics import metrics
@@ -270,7 +270,7 @@ def process_chapter_task(
             text_cursor += block_count
             
             # Process image (in-paint + render text)
-            if mode == "clean" and page_translations:
+            if (mode == TranslationMode.CLEAN or mode == "clean") and page_translations:
                 final_img_bytes = processor.process_image(
                     img_bytes,
                     blocks,
@@ -324,7 +324,7 @@ def process_chapter_task(
         cache_service.set_cached_result(chapter_url, result, target_lang, mode)
         
         # Auto-publish translation if series_name provided
-        if 'series_name' in locals() and series_name:
+        if series_name:
             try:
                 from app.operations.translation_publisher import publish_translation_on_completion
                 publish_translation_on_completion(
@@ -333,10 +333,14 @@ def process_chapter_task(
                     chapter_url=chapter_url,
                     source_lang=source_lang,
                     target_lang=target_lang,
-                    series_name=series_name
+                    series_name=series_name,
+                    series_description=f"Translated series: {series_name}",  # Default description
+                    replace_existing_chapters=True  # Replace existing chapters/translations
                 )
             except Exception as e:
-                logger.warning(f"Error auto-publishing translation: {e}")
+                logger.error(f"Error auto-publishing translation: {e}", exc_info=True)
+                # Don't fail the entire task if publishing fails
+                # The translation files are already saved, can be published manually later
         
         return result
         

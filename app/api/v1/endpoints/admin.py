@@ -57,14 +57,16 @@ def get_stats(
         
         # Get job statistics
         total_jobs = db.query(func.count(TranslationJob.id)).scalar()
+        from app.core.enums import JobStatus
+        
         completed_jobs = db.query(func.count(TranslationJob.id)).filter(
-            TranslationJob.status == "COMPLETED"
+            TranslationJob.status == JobStatus.COMPLETED
         ).scalar()
         failed_jobs = db.query(func.count(TranslationJob.id)).filter(
-            TranslationJob.status == "FAILED"
+            TranslationJob.status == JobStatus.FAILED
         ).scalar()
         pending_jobs = db.query(func.count(TranslationJob.id)).filter(
-            TranslationJob.status == "PENDING"
+            TranslationJob.status == JobStatus.PENDING
         ).scalar()
         
         # Get user statistics

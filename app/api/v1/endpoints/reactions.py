@@ -21,7 +21,7 @@ router = APIRouter()
 
 @router.post("/reactions", response_model=BaseResponse[dict])
 def add_reaction(
-    reaction_type: str = Query(..., regex="^(emoji|gif|memoji)$"),
+    reaction_type: str = Query(..., description="Reaction type: emoji, gif, or memoji"),
     reaction_value: str = Query(...),
     series_id: Optional[int] = None,
     chapter_id: Optional[int] = None,

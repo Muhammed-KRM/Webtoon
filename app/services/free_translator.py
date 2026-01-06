@@ -1,25 +1,52 @@
 """
-Free Translation Service - Uses free translation APIs (Google Translate, DeepL free tier)
+Free Translation Service - Uses free translation APIs with automatic fallback
+Priority: Hugging Face > Argos Translate > Google Translate > DeepL
 """
 from typing import List, Optional
 from loguru import logger
 from deep_translator import GoogleTranslator, DeepL
 from app.services.language_detector import LanguageDetector
 
+# Try to import alternative translators
+try:
+    from app.services.alternative_translator import AlternativeTranslator
+    ALTERNATIVE_AVAILABLE = True
+except ImportError:
+    ALTERNATIVE_AVAILABLE = False
+    logger.debug("Alternative translators not available")
+
 
 class FreeTranslator:
-    """Service for free translation using Google Translate or DeepL free tier"""
+    """Service for free translation with automatic fallback to best available service"""
     
-    def __init__(self, provider: str = "google"):
+    def __init__(self, provider: str = "auto"):
         """
         Initialize free translator
         
         Args:
-            provider: "google" or "deepl" (default: "google")
+            provider: "auto" (try all), "huggingface", "argos", "google", "deepl"
         """
         self.provider = provider
         self._google_translator = None
         self._deepl_translator = None
+        self._alternative_translator = None
+        
+        # Initialize alternative translator if available
+        if ALTERNATIVE_AVAILABLE and provider in ["auto", "huggingface", "argos"]:
+            try:
+                # Try Hugging Face first (faster, better quality)
+                if provider in ["auto", "huggingface"]:
+                    self._alternative_translator = AlternativeTranslator(provider="huggingface")
+                    if self._alternative_translator.hf_pipeline:
+                        logger.info("Using Hugging Face models for translation")
+                        return
+                # Fallback to Argos if Hugging Face not available
+                if provider in ["auto", "argos"]:
+                    self._alternative_translator = AlternativeTranslator(provider="argos")
+                    logger.info("Using Argos Translate for translation")
+            except Exception as e:
+                logger.warning(f"Alternative translator initialization failed: {e}")
+                self._alternative_translator = None
     
     def _get_google_translator(self, source: str, target: str):
         """Get or create Google Translator instance"""
@@ -79,8 +106,31 @@ class FreeTranslator:
         source_lang = LanguageDetector.normalize_language_code(source_lang)
         target_lang = LanguageDetector.normalize_language_code(target_lang)
         
+        # Try alternative translators first (if auto mode or explicitly requested)
+        if (provider == "auto" or provider in ["huggingface", "argos"]) and self._alternative_translator:
+            try:
+                # Determine which alternative provider to use
+                alt_provider = None
+                if provider == "huggingface":
+                    alt_provider = "huggingface"
+                elif provider == "argos":
+                    alt_provider = "argos"
+                elif provider == "auto":
+                    # Try Hugging Face first, then Argos
+                    alt_provider = "huggingface" if self._alternative_translator.hf_pipeline else "argos"
+                
+                result = self._alternative_translator.translate_batch(
+                    texts, source_lang, target_lang, provider=alt_provider
+                )
+                if result and len(result) == len(texts) and any(r for r in result if r):
+                    logger.info(f"Successfully translated using alternative translator ({alt_provider})")
+                    return result
+            except Exception as e:
+                logger.warning(f"Alternative translator failed: {e}, falling back to Google Translate")
+        
+        # Fallback to Google Translate or DeepL
         try:
-            if provider == "google":
+            if provider == "auto" or provider == "google":
                 translator = self._get_google_translator(source_lang, target_lang)
                 if translator is None:
                     raise ValueError("Failed to initialize Google Translator")
