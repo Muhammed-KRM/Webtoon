@@ -11,6 +11,7 @@ from app.schemas.base_response import BaseResponse
 from app.models.user import User
 from app.models.reading import ReadingHistory, Bookmark, Rating
 from app.models.series import Series, Chapter
+from app.core.cache_invalidation import CacheInvalidation
 
 router = APIRouter()
 

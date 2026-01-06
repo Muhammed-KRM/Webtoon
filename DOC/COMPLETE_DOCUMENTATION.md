@@ -1,0 +1,1326 @@
+# 📚 Webtoon AI Translator - Kapsamlı Dokümantasyon
+
+## 🎯 **UYGULAMANIN AMACI**
+
+**Webtoon AI Translator**, webtoon serilerini otomatik olarak çeviren profesyonel bir makine çeviri platformudur. Uygulama, görüntü işleme (Computer Vision), doğal dil işleme (NLP) ve asenkron iş akışları kullanarak webtoon görsellerindeki metinleri algılar, çevirir ve orijinal görsel üzerine yerleştirir.
+
+### Ana Hedefler:
+1. **Otomatik Çeviri:** Webtoon bölümlerini otomatik olarak çevirme
+2. **Çoklu Site Desteği:** Farklı webtoon sitelerinden içerik çekme
+3. **Çoklu Dil Desteği:** 30+ dilde çeviri yapabilme
+4. **Okuma Platformu:** Çevrilmiş içerikleri okuma sitesi olarak sunma
+5. **Premium Sistem:** Kullanıcılara premium çeviri hizmeti sunma
+6. **Topluluk Özellikleri:** Yorum, tepki, favori gibi sosyal özellikler
+
+### İki Ayrı Site İçin:
+- **Çeviri Sitesi:** Diğer kullanıcılara makine çeviri hizmeti sunma
+- **Okuma Sitesi:** Çevrilmiş webtoon serilerini okuma platformu
+
+---
+
+## 🛠️ **KULLANILAN TEKNOLOJİLER VE KULLANIM YERLERİ**
+
+### Backend Framework
+**FastAPI**
+- **Nerede:** `main.py`, tüm API endpoint'leri
+- **Neden:** Asenkron, hızlı, modern Python framework
+- **Kullanım:** RESTful API, request/response handling, middleware
+
+### Task Queue
+**Celery + Redis**
+- **Nerede:** `app/operations/translation_manager.py`, `app/celery_app.py`
+- **Neden:** Uzun süren çeviri işlemlerini arka planda çalıştırmak
+- **Kullanım:** OCR, çeviri, görüntü işleme işlemleri
+
+### Database
+**SQLAlchemy (ORM) + PostgreSQL/SQLite**
+- **Nerede:** `app/db/`, `app/models/`
+- **Neden:** Veritabanı yönetimi, ORM ile kolay veri erişimi
+- **Kullanım:** Tüm veri modelleri, ilişkiler, sorgular
+
+### Caching
+**Redis**
+- **Nerede:** `app/services/cache_service.py`, `app/services/api_cache.py`
+- **Neden:** Hızlı veri erişimi, performans optimizasyonu
+- **Kullanım:** 
+  - API response caching
+  - Translation result caching
+  - Rate limiting
+  - Metrics storage
+
+### OCR Engine
+**EasyOCR**
+- **Nerede:** `app/services/ocr_service.py`
+- **Neden:** Görüntülerden metin algılama
+- **Kullanım:** Webtoon sayfalarındaki metinleri tespit etme
+
+### Translation Engine
+**OpenAI GPT-4o-mini**
+- **Nerede:** `app/services/ai_translator.py`
+- **Neden:** Context-aware, tutarlı çeviri
+- **Kullanım:** Metin çevirisi, karakter isim tutarlılığı
+
+### Image Processing
+**OpenCV + Pillow**
+- **Nerede:** `app/services/image_processor.py`
+- **Neden:** Görüntü işleme, metin yerleştirme
+- **Kullanım:** 
+  - In-painting (metin silme)
+  - Metin yerleştirme
+  - Font boyutlandırma
+
+### Authentication
+**JWT (OAuth2)**
+- **Nerede:** `app/core/security.py`
+- **Neden:** Güvenli kullanıcı kimlik doğrulama
+- **Kullanım:** Token tabanlı authentication, role-based access
+
+### Web Scraping
+**httpx + BeautifulSoup + Selenium**
+- **Nerede:** `app/services/scraper_service.py`, `app/services/scrapers/`
+- **Neden:** Webtoon sitelerinden içerik çekme
+- **Kullanım:** 
+  - Webtoons.com scraping
+  - AsuraScans scraping
+  - Dinamik içerik yükleme
+
+### Payment Gateway
+**Stripe**
+- **Nerede:** `app/services/payment_service.py`, `app/api/v1/endpoints/payments.py`
+- **Neden:** Premium ödemeleri işleme
+- **Kullanım:** Payment intent, webhook handling
+
+### Logging
+**Loguru + Database Logging**
+- **Nerede:** `app/services/db_logger.py`, `app/core/middleware.py`
+- **Neden:** Hata takibi, performans izleme
+- **Kullanım:** Request/response logging, error tracking
+
+### Database Migrations
+**Alembic**
+- **Nerede:** `alembic/`, `alembic.ini`
+- **Neden:** Veritabanı şema yönetimi
+- **Kullanım:** Schema değişiklikleri, version control
+
+### Validation
+**Pydantic**
+- **Nerede:** `app/schemas/`
+- **Neden:** Request/response validation
+- **Kullanım:** Tüm API endpoint'lerinde data validation
+
+### Compression
+**Gzip Middleware**
+- **Nerede:** `app/core/compression.py`
+- **Neden:** Response boyutunu küçültme
+- **Kullanım:** Tüm API response'larında otomatik compression
+
+### Rate Limiting
+**slowapi + Redis**
+- **Nerede:** `app/core/rate_limit.py`
+- **Neden:** API abuse önleme
+- **Kullanım:** Endpoint rate limiting
+
+### Metrics
+**Custom Metrics Collector**
+- **Nerede:** `app/core/metrics.py`
+- **Neden:** Performans izleme
+- **Kullanım:** Request counters, timing, error rates
+
+### Retry & Circuit Breaker
+**Custom Implementation**
+- **Nerede:** `app/core/retry.py`, `app/core/circuit_breaker.py`
+- **Neden:** Hata toleransı, sistem stabilitesi
+- **Kullanım:** External API çağrılarında retry logic
+
+---
+
+## 📁 **NİHAİ TAM DOSYA YAPISI**
+
+```
+webtoon-ai-translator/
+│
+├── 📄 main.py                          # FastAPI uygulama giriş noktası
+├── 📄 requirements.txt                 # Python bağımlılıkları
+├── 📄 alembic.ini                      # Alembic konfigürasyonu
+├── 📄 .env.example                     # Environment variables örneği
+├── 📄 .gitignore                       # Git ignore kuralları
+│
+├── 📁 alembic/                         # Database migrations
+│   ├── env.py                          # Alembic environment
+│   ├── script.py.mako                  # Migration template
+│   └── versions/                       # Migration dosyaları
+│
+├── 📁 app/                             # Ana uygulama klasörü
+│   │
+│   ├── 📁 api/                         # API katmanı
+│   │   └── 📁 v1/                      # API v1
+│   │       ├── router.py               # Tüm endpoint'leri toplayan router
+│   │       └── 📁 endpoints/           # Endpoint dosyaları
+│   │           ├── auth.py              # Authentication endpoints
+│   │           ├── translate.py         # Çeviri endpoints
+│   │           ├── jobs.py              # Job history endpoints
+│   │           ├── files.py             # File serving endpoints
+│   │           ├── admin.py             # Admin endpoints
+│   │           ├── metrics.py           # Metrics endpoints
+│   │           ├── users.py             # User management endpoints
+│   │           ├── series.py            # Series management endpoints
+│   │           ├── comments.py          # Comment endpoints
+│   │           ├── reactions.py        # Reaction endpoints
+│   │           ├── subscription.py      # Subscription endpoints
+│   │           ├── payments.py          # Payment endpoints
+│   │           ├── site_settings.py     # Site settings endpoints
+│   │           ├── reading.py           # Reading history/bookmarks/ratings
+│   │           ├── notifications.py    # Notification endpoints
+│   │           ├── public.py            # Public (no auth) endpoints
+│   │           ├── cache.py             # Cache management endpoints
+│   │           └── logs.py              # Log viewing endpoints
+│   │
+│   ├── 📁 core/                        # Çekirdek modüller (14 dosya)
+│   │   ├── config.py                    # Uygulama ayarları
+│   │   │                                 # - Settings class (Pydantic)
+│   │   │                                 # - Environment variables
+│   │   │                                 # - Default values
+│   │   │
+│   │   ├── database.py                 # Database connection
+│   │   │                                 # - SQLAlchemy engine
+│   │   │                                 # - SessionLocal factory
+│   │   │                                 # - get_db() dependency
+│   │   │
+│   │   ├── security.py                 # JWT, password hashing
+│   │   │                                 # - create_access_token()
+│   │   │                                 # - verify_password()
+│   │   │                                 # - get_current_user()
+│   │   │                                 # - require_admin()
+│   │   │                                 # - get_current_user_optional()
+│   │   │
+│   │   ├── exceptions.py               # Custom exceptions
+│   │   │                                 # - global_exception_handler
+│   │   │                                 # - validation_exception_handler
+│   │   │                                 # - database_exception_handler
+│   │   │
+│   │   ├── middleware.py               # Request/response middleware
+│   │   │                                 # - RequestIDMiddleware
+│   │   │                                 # - LoggingMiddleware
+│   │   │                                 # - SecurityHeadersMiddleware
+│   │   │
+│   │   ├── metrics.py                   # Metrics collection
+│   │   │                                 # - MetricsCollector class
+│   │   │                                 # - increment_counter()
+│   │   │                                 # - record_timing()
+│   │   │
+│   │   ├── rate_limit.py                # Rate limiting
+│   │   │                                 # - @rate_limit decorator
+│   │   │                                 # - Redis-based limiting
+│   │   │
+│   │   ├── retry.py                     # Retry decorators
+│   │   │                                 # - @retry (async)
+│   │   │                                 # - @retry_sync
+│   │   │
+│   │   ├── circuit_breaker.py          # Circuit breaker pattern
+│   │   │                                 # - CircuitBreaker class
+│   │   │                                 # - Failure threshold
+│   │   │
+│   │   ├── compression.py              # Gzip compression
+│   │   │                                 # - CompressionMiddleware
+│   │   │                                 # - Response compression
+│   │   │
+│   │   ├── query_optimizer.py          # Query optimization
+│   │   │                                 # - Eager loading utilities
+│   │   │                                 # - N+1 query prevention
+│   │   │
+│   │   ├── cache_invalidation.py       # Cache invalidation
+│   │   │                                 # - CacheInvalidation class
+│   │   │                                 # - Invalidate methods
+│   │   │
+│   │   ├── stale_while_revalidate.py   # SWR pattern
+│   │   │                                 # - Stale-while-revalidate cache
+│   │   │
+│   │   ├── cache_decorator.py           # Cache decorator
+│   │   │                                 # - @cache_response decorator
+│   │   │
+│   │   └── response.py                  # Base response model
+│   │                                     # - BaseResponse<T> generic
+│   │                                     # - success_response()
+│   │                                     # - error_response()
+│   │
+│   ├── 📁 db/                          # Database modülleri
+│   │   ├── base.py                     # SQLAlchemy base
+│   │   └── session.py                   # Database session factory
+│   │
+│   ├── 📁 models/                      # Database modelleri
+│   │   ├── user.py                      # User model
+│   │   ├── job.py                       # TranslationJob model
+│   │   ├── series.py                    # Series, Chapter, ChapterTranslation
+│   │   ├── comment.py                   # Comment model
+│   │   ├── comment_like.py              # CommentLike model
+│   │   ├── reaction.py                  # Reaction model
+│   │   ├── subscription.py              # Subscription, Payment models
+│   │   ├── site_settings.py             # SiteSettings model
+│   │   ├── reading.py                   # ReadingHistory, Bookmark, Rating, Notification
+│   │   ├── log.py                       # Log model
+│   │   └── __init__.py                  # Model exports
+│   │
+│   ├── 📁 schemas/                     # Pydantic schemas (9 dosya)
+│   │   ├── base_response.py             # BaseResponse model
+│   │   │                                 # - Generic BaseResponse<T>
+│   │   │                                 # - success/error helpers
+│   │   │
+│   │   ├── auth.py                      # Auth schemas
+│   │   │                                 # - UserRegister
+│   │   │                                 # - UserLogin
+│   │   │                                 # - Token, UserResponse
+│   │   │
+│   │   ├── translation.py               # Translation schemas
+│   │   │                                 # - TranslationRequest
+│   │   │                                 # - JobStatusResponse
+│   │   │                                 # - ChapterResponse
+│   │   │
+│   │   ├── batch_translation.py         # Batch translation schemas
+│   │   │                                 # - BatchTranslationRequest
+│   │   │                                 # - ChapterRangeRequest
+│   │   │                                 # - BatchTranslationResponse
+│   │   │
+│   │   ├── series.py                    # Series schemas
+│   │   │                                 # - SeriesCreate, SeriesUpdate
+│   │   │                                 # - SeriesResponse
+│   │   │                                 # - ChapterResponse
+│   │   │                                 # - ChapterTranslationResponse
+│   │   │
+│   │   ├── comment.py                   # Comment schemas
+│   │   │                                 # - CommentCreate, CommentUpdate
+│   │   │                                 # - CommentResponse (with replies)
+│   │   │
+│   │   ├── reaction.py                  # Reaction schemas
+│   │   │                                 # - ReactionCreate
+│   │   │                                 # - ReactionResponse
+│   │   │                                 # - ReactionSummary
+│   │   │
+│   │   ├── subscription.py              # Subscription schemas
+│   │   │                                 # - SubscriptionResponse
+│   │   │                                 # - PaymentRequest, PaymentResponse
+│   │   │
+│   │   ├── site_settings.py             # Site settings schemas
+│   │   │                                 # - SiteSettingsResponse
+│   │   │                                 # - SiteSettingsUpdate
+│   │   │
+│   │   └── __init__.py                  # Schema exports
+│   │
+│   ├── 📁 services/                    # Servis katmanı (13 dosya)
+│   │   ├── scraper_service.py           # Web scraping orchestrator
+│   │   │                                 # - Site detection
+│   │   │                                 # - Scraper selection
+│   │   │                                 # - fetch_chapter_images()
+│   │   │
+│   │   ├── scrapers/                    # Site-specific scrapers (3 dosya)
+│   │   │   ├── base_scraper.py          # Base scraper interface
+│   │   │   │                             # - Abstract base class
+│   │   │   │                             # - Common HTTP client
+│   │   │   │
+│   │   │   ├── webtoons_scraper.py      # Webtoons.com scraper
+│   │   │   │                             # - API endpoint detection
+│   │   │   │                             # - HTML parsing
+│   │   │   │                             # - JavaScript variable extraction
+│   │   │   │
+│   │   │   └── asura_scraper.py         # AsuraScans scraper
+│   │   │                                 # - Reader container detection
+│   │   │                                 # - Image URL extraction
+│   │   │
+│   │   ├── ocr_service.py               # OCR (EasyOCR)
+│   │   │                                 # - EasyOCR reader initialization
+│   │   │                                 # - Text detection
+│   │   │                                 # - Bounding box extraction
+│   │   │                                 # - GPU support (optional)
+│   │   │
+│   │   ├── ai_translator.py             # OpenAI translation
+│   │   │                                 # - GPT-4o-mini integration
+│   │   │                                 # - Context-aware translation
+│   │   │                                 # - Cached Input support
+│   │   │                                 # - Batch translation
+│   │   │
+│   │   ├── image_processor.py           # Image processing (OpenCV, Pillow)
+│   │   │                                 # - In-painting (text removal)
+│   │   │                                 # - Text rendering
+│   │   │                                 # - Dynamic font sizing
+│   │   │                                 # - Multi-line text support
+│   │   │
+│   │   ├── file_manager.py              # File organization
+│   │   │                                 # - Folder structure creation
+│   │   │                                 # - Chapter/page naming
+│   │   │                                 # - Metadata saving
+│   │   │
+│   │   ├── cache_service.py             # Redis caching
+│   │   │                                 # - Translation result caching
+│   │   │                                 # - Cache key generation
+│   │   │                                 # - TTL management
+│   │   │
+│   │   ├── api_cache.py                 # API response caching
+│   │   │                                 # - Endpoint response caching
+│   │   │                                 # - Cache key hashing
+│   │   │                                 # - Invalidation utilities
+│   │   │
+│   │   ├── db_logger.py                 # Database logging
+│   │   │                                 # - Background log writer thread
+│   │   │                                 # - Log queue management
+│   │   │                                 # - Database log storage
+│   │   │
+│   │   ├── notification_service.py      # Notification service
+│   │   │                                 # - Create notifications
+│   │   │                                 # - Translation completed
+│   │   │                                 # - New chapter
+│   │   │                                 # - Comment reply
+│   │   │
+│   │   ├── payment_service.py           # Stripe payment service
+│   │   │                                 # - Payment intent creation
+│   │   │                                 # - Payment confirmation
+│   │   │                                 # - Webhook handling
+│   │   │
+│   │   ├── language_detector.py         # Language detection
+│   │   │                                 # - URL-based detection
+│   │   │                                 # - Language validation
+│   │   │                                 # - ISO 639-1 support
+│   │   │
+│   │   └── url_generator.py             # URL generation utilities
+│   │                                     # - Chapter range parsing
+│   │                                     # - URL pattern detection
+│   │                                     # - Chapter URL generation
+│   │
+│   ├── 📁 operations/                  # İş akışı yönetimi (3 dosya)
+│   │   ├── translation_manager.py       # Translation pipeline (Celery task)
+│   │   │                                 # - @celery_app.task decorator
+│   │   │                                 # - process_chapter_task()
+│   │   │                                 # - Full pipeline orchestration
+│   │   │                                 # - Progress tracking
+│   │   │                                 # - Error handling
+│   │   │
+│   │   ├── batch_translation_manager.py  # Batch translation
+│   │   │                                 # - batch_translation_task()
+│   │   │                                 # - Multiple chapter processing
+│   │   │                                 # - Sequential execution
+│   │   │
+│   │   └── translation_publisher.py     # Auto-publish translations
+│   │                                     # - publish_translation_on_completion()
+│   │                                     # - ChapterTranslation creation
+│   │                                     # - Automatic publishing
+│   │
+│   └── 📁 __init__.py
+│
+├── 📁 DOC/                             # Dokümantasyon
+│   ├── COMPLETE_DOCUMENTATION.md        # Bu dosya
+│   ├── API_KEY_REHBERI.md              # API key rehberi
+│   ├── BACKEND_REVIEW.md                # Backend inceleme
+│   ├── CACHE_STRATEGY.md                # Cache stratejisi
+│   ├── COMPLETE_CACHE_INVALIDATION.md   # Cache invalidation
+│   ├── COMPLETE_ENDPOINTS.md            # Endpoint listesi
+│   ├── COMPLETE_IMPLEMENTATION.md       # Implementation detayları
+│   ├── PERFORMANCE_OPTIMIZATIONS.md    # Performans optimizasyonları
+│   ├── SPEED_OPTIMIZATIONS.md           # Hız optimizasyonları
+│   └── ... (diğer dokümantasyon dosyaları)
+│
+├── 📁 storage/                         # Çevrilmiş görseller (gitignore)
+│   └── {series_name}/                  # Seri klasörleri
+│       └── {source_lang}_to_{target_lang}/
+│           └── chapter_{number:04d}/
+│               ├── page_001.jpg
+│               ├── page_002.jpg
+│               └── metadata.json
+│
+├── 📁 cache/                           # Cache dosyaları (gitignore)
+│
+├── 📁 fonts/                           # Font dosyaları
+│   └── (Türkçe karakter desteği olan fontlar)
+│
+├── 📄 README.md                        # Ana README
+│                                        # - Proje açıklaması
+│                                        # - Hızlı başlangıç
+│                                        # - Özellikler
+│
+├── 📄 START.bat                        # Proje başlatma script'i
+│                                        # - Redis başlatma
+│                                        # - Celery Worker başlatma
+│                                        # - FastAPI başlatma
+│                                        # - Tarayıcı otomatik açma
+│
+├── 📄 STOP.bat                         # Proje durdurma script'i
+│                                        # - Tüm servisleri durdurma
+│
+├── 📄 RESTART.bat                      # Proje yeniden başlatma
+│
+├── 📄 CHECK.bat                        # Servis durumu kontrol
+│                                        # - Redis durumu
+│                                        # - Celery durumu
+│                                        # - FastAPI durumu
+│
+├── 📄 SETUP.bat                        # İlk kurulum script'i
+│                                        # - Virtual environment
+│                                        # - Paket yükleme
+│                                        # - .env oluşturma
+│                                        # - Klasör oluşturma
+│
+├── 📄 GITHUB_DEPLOY.bat                # GitHub'a yükleme script'i
+│
+├── 📄 GITHUB_INSTRUCTIONS.md            # GitHub talimatları
+│
+├── 📄 ENV_OLUSTUR.md                    # Environment variables rehberi
+│
+├── 📄 KURULUM.md                        # Kurulum rehberi
+│
+└── 📄 MIGRATIONS_GUIDE.md              # Database migration rehberi
+```
+
+---
+
+## ⚡ **KISA ÖZELLİK ÖZETİ**
+
+### ✅ **Çeviri Özellikleri**
+- ✅ Multi-site scraping (Webtoons.com, AsuraScans)
+- ✅ Multi-language translation (30+ dil)
+- ✅ Context-aware translation (tutarlı karakter isimleri)
+- ✅ Batch translation (bölüm aralığı)
+- ✅ Automatic translation publishing
+
+### ✅ **Okuma Platformu Özellikleri**
+- ✅ Series management (seri yönetimi)
+- ✅ Chapter management (bölüm yönetimi)
+- ✅ Multi-language reading (çoklu dil okuma)
+- ✅ Reading history (okuma geçmişi)
+- ✅ Bookmarks (favoriler)
+- ✅ Ratings (puanlar)
+
+### ✅ **Sosyal Özellikler**
+- ✅ Comment system (yorum sistemi)
+- ✅ Reply system (cevap sistemi)
+- ✅ Like system (beğeni sistemi)
+- ✅ Reaction system (emoji, gif, memoji tepkileri)
+
+### ✅ **Premium & Payment**
+- ✅ Subscription system (abonelik sistemi)
+- ✅ Stripe payment integration
+- ✅ Monthly chapter limits
+- ✅ Extra chapter purchases
+
+### ✅ **Performans & Optimizasyon**
+- ✅ Redis caching (API responses, translations)
+- ✅ Response compression (Gzip)
+- ✅ Query optimization (eager loading)
+- ✅ Database logging
+- ✅ Cache invalidation (aggressive)
+
+### ✅ **Güvenlik & Monitoring**
+- ✅ JWT authentication
+- ✅ Role-based access control
+- ✅ Rate limiting
+- ✅ Request logging
+- ✅ Error tracking
+- ✅ Metrics collection
+
+---
+
+## 📋 **TÜM ENDPOINT'LER VE AÇIKLAMALARI**
+
+> **Not:** Tüm endpoint'ler `BaseResponse<T>` formatında response döner:
+> ```json
+> {
+>   "success": true,
+>   "message": "Success message",
+>   "data": { ... }
+> }
+> ```
+> 
+> **Cache Notu:** Public ve read-heavy endpoint'ler Redis ile cache'lenir (TTL: 3-5 dakika). Write işlemlerinde otomatik cache invalidation yapılır.
+
+### 🔐 **Authentication Endpoints** (`/api/v1/auth`)
+
+#### `POST /api/v1/auth/register`
+**Amaç:** Yeni kullanıcı kaydı
+**Request:**
+```json
+{
+  "username": "string",
+  "email": "string",
+  "password": "string"
+}
+```
+**Response:** JWT access token
+**Kullanım:** Kullanıcı kayıt işlemi
+
+#### `POST /api/v1/auth/login`
+**Amaç:** Kullanıcı girişi
+**Request:**
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+**Response:** JWT access token
+**Kullanım:** Kullanıcı giriş işlemi
+
+#### `GET /api/v1/auth/me`
+**Amaç:** Giriş yapan kullanıcı bilgisi
+**Auth:** Required
+**Response:** User profile
+**Kullanım:** Kullanıcı profil bilgisi
+
+---
+
+### 🌐 **Translation Endpoints** (`/api/v1/translate`)
+
+#### `POST /api/v1/translate/start`
+**Amaç:** Çeviri işlemini başlatır
+**Auth:** Required
+**Request:**
+```json
+{
+  "chapter_url": "string",
+  "target_lang": "tr",
+  "source_lang": "en",
+  "mode": "clean"
+}
+```
+**Response:** Task ID
+**Kullanım:** Tek bölüm çevirisi başlatma
+
+#### `GET /api/v1/translate/status/{task_id}`
+**Amaç:** Çeviri işleminin durumunu kontrol eder
+**Auth:** Required
+**Response:** Status, progress (0-100)
+**Kullanım:** İşlem ilerlemesini takip etme
+
+#### `GET /api/v1/translate/result/{task_id}`
+**Amaç:** Tamamlanmış çeviri sonuçlarını getirir
+**Auth:** Required
+**Response:** Processed images list
+**Kullanım:** Çevrilmiş sayfaları görüntüleme
+
+#### `POST /api/v1/translate/batch/start`
+**Amaç:** Başlangıç ve bitiş bölüm numaraları ile toplu çeviri başlatır
+**Auth:** Required
+**Request:**
+```json
+{
+  "base_url": "https://webtoons.com/en/series/episode-{}/viewer",
+  "start_chapter": 1,
+  "end_chapter": 10,
+  "source_lang": "en",
+  "target_lang": "tr",
+  "mode": "clean",
+  "series_name": "Eleceed"
+}
+```
+**Response:** BatchTranslationResponse (task_id, total_chapters, chapters list)
+**Kullanım:** Ardışık bölüm aralığı çevirisi (1-10 gibi)
+
+#### `POST /api/v1/translate/batch/range`
+**Amaç:** Esnek bölüm aralığı çevirisi başlatır (örn: "1-10", "5,7,9", "1-5,10-15")
+**Auth:** Required
+**Request:**
+```json
+{
+  "series_url": "https://webtoons.com/en/series/episode-{}/viewer",
+  "chapter_range": "1-10,15,20-25",
+  "source_lang": "en",
+  "target_lang": "tr",
+  "mode": "clean",
+  "series_name": "Eleceed"
+}
+```
+**Response:** BatchTranslationResponse
+**Kullanım:** Esnek bölüm seçimi (aralık, tek tek, karışık)
+**Özellik:** URL pattern otomatik algılama ve chapter numarası yerleştirme
+
+---
+
+### 📚 **Series Endpoints** (`/api/v1/series`)
+
+#### `GET /api/v1/series`
+**Amaç:** Seri listesi (public, cached)
+**Auth:** Optional
+**Query Params:**
+- `skip`: Pagination offset
+- `limit`: Page size
+- `search`: Arama terimi
+- `genre`: Genre filtresi
+- `status`: Status filtresi (ongoing, completed)
+- `sort`: Sıralama (newest, popular, rating)
+**Response:** Series list
+**Kullanım:** Ana sayfa seri listesi
+
+#### `GET /api/v1/series/{series_id}`
+**Amaç:** Seri detay sayfası (public, cached)
+**Auth:** Optional
+**Response:** Series details, chapters, ratings, bookmarks
+**Kullanım:** Seri detay sayfası
+
+#### `POST /api/v1/series`
+**Amaç:** Yeni seri oluşturur (Admin only)
+**Auth:** Required (Admin)
+**Request:** SeriesCreate schema
+**Response:** Created series
+**Kullanım:** Admin seri ekleme
+
+#### `GET /api/v1/series/{series_id}/chapters`
+**Amaç:** Seriye ait bölüm listesi (public, cached)
+**Auth:** Optional
+**Query Params:** skip, limit
+**Response:** Chapter list
+**Kullanım:** Seri bölüm listesi
+
+#### `GET /api/v1/chapters/{chapter_id}/translations`
+**Amaç:** Bölümün mevcut çeviri versiyonları (public, cached)
+**Auth:** Optional
+**Query Params:** 
+- `source_lang`: Kaynak dil filtresi (optional)
+- `target_lang`: Hedef dil filtresi (optional)
+**Response:** 
+```json
+{
+  "id": 1,
+  "chapter_id": 5,
+  "source_lang": "en",
+  "target_lang": "tr",
+  "storage_path": "/storage/Eleceed/en_to_tr/chapter_0005",
+  "page_count": 20,
+  "status": "completed",
+  "is_published": true,
+  "view_count": 150
+}
+```
+**Kullanım:** Çeviri versiyonlarını görüntüleme, dil seçimi
+**Cache:** 10 dakika (TTL: 600)
+
+#### `POST /api/v1/chapters/{chapter_id}/translate`
+**Amaç:** Bölüm için çeviri isteği (Premium)
+**Auth:** Required (Premium)
+**Query Params:** `target_lang` (string, required)
+**Response:** 
+```json
+{
+  "chapter_id": 5,
+  "target_lang": "tr",
+  "task_id": "abc123-def456",
+  "translation_id": 10
+}
+```
+**Kullanım:** Premium kullanıcı çeviri isteği
+**Özellikler:**
+- Aylık limit kontrolü
+- Limit aşılırsa ödeme gerektirme (402 Payment Required)
+- Otomatik ChapterTranslation oluşturma
+- Çeviri tamamlandığında otomatik yayınlama
+**Cache Invalidation:** Chapter ve series cache'i temizlenir
+
+---
+
+### 💬 **Comment Endpoints** (`/api/v1/comments`)
+
+#### `GET /api/v1/comments`
+**Amaç:** Yorum listesi (public, cached)
+**Auth:** Optional
+**Query Params:**
+- `series_id`: Seri filtresi
+- `chapter_id`: Bölüm filtresi
+- `skip`, `limit`: Pagination
+**Response:** Comment list with nested replies
+**Kullanım:** Yorumları görüntüleme
+
+#### `POST /api/v1/comments`
+**Amaç:** Yeni yorum yazma
+**Auth:** Required
+**Request:**
+```json
+{
+  "series_id": 1,
+  "chapter_id": 5,
+  "content": "string",
+  "attachments": []
+}
+```
+**Response:** Created comment
+**Kullanım:** Yorum yazma
+
+#### `POST /api/v1/comments/{comment_id}/reply`
+**Amaç:** Yorum cevaplama
+**Auth:** Required
+**Request:** content (string)
+**Response:** Created reply
+**Kullanım:** Yorum cevaplama
+
+#### `POST /api/v1/comments/{comment_id}/like`
+**Amaç:** Yorum beğenme/unlike (toggle)
+**Auth:** Required
+**Response:** 
+```json
+{
+  "comment_id": 5,
+  "like_count": 12,
+  "liked": true
+}
+```
+**Kullanım:** Yorum beğenme/beğenmeme (toggle)
+**Özellik:** İlk çağrıda beğenir, ikinci çağrıda beğeniyi kaldırır
+**Cache Invalidation:** Comment cache temizlenir
+
+#### `PUT /api/v1/comments/{comment_id}`
+**Amaç:** Yorum düzenleme
+**Auth:** Required (own comment or admin)
+**Request:** CommentUpdate schema
+**Response:** Updated comment
+**Kullanım:** Yorum düzenleme
+
+#### `DELETE /api/v1/comments/{comment_id}`
+**Amaç:** Yorum silme (soft delete)
+**Auth:** Required (own comment or admin)
+**Response:** Success message
+**Kullanım:** Yorum silme
+
+---
+
+### ⚡ **Reaction Endpoints** (`/api/v1/reactions`)
+
+#### `POST /api/v1/reactions`
+**Amaç:** Tepki ekleme (emoji, gif, memoji)
+**Auth:** Required
+**Query Params:**
+- `reaction_type`: emoji, gif, memoji
+- `reaction_value`: Tepki değeri
+- `series_id` OR `chapter_id` OR `comment_id`: Hedef entity
+**Response:** Reaction data
+**Kullanım:** Seri/bölüm/yoruma tepki verme
+
+#### `DELETE /api/v1/reactions`
+**Amaç:** Tepki kaldırma
+**Auth:** Required
+**Query Params:** series_id OR chapter_id OR comment_id
+**Response:** Success message
+**Kullanım:** Tepki kaldırma
+
+#### `GET /api/v1/reactions`
+**Amaç:** Tepkileri görüntüleme (public, cached)
+**Auth:** Optional
+**Query Params:** series_id OR chapter_id OR comment_id
+**Response:** Reaction summary (grouped by value)
+**Kullanım:** Tepki istatistikleri
+
+---
+
+### 📖 **Reading Endpoints** (`/api/v1/reading`)
+
+#### `POST /api/v1/reading/history`
+**Amaç:** Okuma geçmişi güncelleme
+**Auth:** Required
+**Query Params:**
+- `chapter_id`: Bölüm ID
+- `translation_id`: Çeviri ID (optional)
+- `last_page`: Son okunan sayfa
+**Response:** Updated history
+**Kullanım:** Okuma ilerlemesini kaydetme
+
+#### `GET /api/v1/reading/history`
+**Amaç:** Okuma geçmişi listesi (cached)
+**Auth:** Required
+**Query Params:** skip, limit
+**Response:** Reading history list
+**Kullanım:** Okuma geçmişini görüntüleme
+
+#### `POST /api/v1/bookmarks`
+**Amaç:** Favori ekleme
+**Auth:** Required
+**Query Params:**
+- `series_id`: Seri ID
+- `notes`: Notlar (optional)
+**Response:** Bookmark data
+**Kullanım:** Seriyi favorilere ekleme
+
+#### `DELETE /api/v1/bookmarks/{series_id}`
+**Amaç:** Favori kaldırma
+**Auth:** Required
+**Response:** Success message
+**Kullanım:** Favoriden çıkarma
+
+#### `GET /api/v1/bookmarks`
+**Amaç:** Favori listesi (cached)
+**Auth:** Required
+**Query Params:** skip, limit
+**Response:** Bookmark list
+**Kullanım:** Favorileri görüntüleme
+
+#### `POST /api/v1/ratings`
+**Amaç:** Seri veya bölüme puan verme
+**Auth:** Required
+**Query Params:**
+- `series_id` OR `chapter_id`: Hedef entity (exactly one required)
+- `rating`: 1-5 arası puan (required)
+- `review`: İnceleme metni (optional)
+**Response:** 
+```json
+{
+  "rating": 5,
+  "series_id": 1,
+  "chapter_id": null
+}
+```
+**Kullanım:** Seri/bölüme puan verme
+**Özellik:** 
+- Mevcut puan varsa günceller
+- Seri/chapter ortalama puanını otomatik günceller
+- Rating count'u günceller
+**Cache Invalidation:** Series/chapter cache temizlenir
+
+---
+
+### 💳 **Subscription Endpoints** (`/api/v1/subscription`)
+
+#### `GET /api/v1/subscription`
+**Amaç:** Kullanıcının abonelik bilgisi
+**Auth:** Required
+**Response:** Subscription details
+**Kullanım:** Abonelik durumu görüntüleme
+
+#### `POST /api/v1/subscription/upgrade`
+**Amaç:** Abonelik yükseltme
+**Auth:** Required
+**Query Params:** plan_type (free, basic, premium)
+**Response:** Updated subscription
+**Kullanım:** Premium'a geçiş
+
+#### `POST /api/v1/subscription/payment`
+**Amaç:** Extra bölüm ödemesi (basit ödeme kaydı)
+**Auth:** Required
+**Request:** 
+```json
+{
+  "chapter_count": 5,
+  "payment_method": "stripe"
+}
+```
+**Response:** PaymentResponse (payment record)
+**Kullanım:** Ekstra bölüm satın alma (basit kayıt)
+**Not:** Gerçek ödeme için `/api/v1/payments/create-intent` kullanın
+
+#### `POST /api/v1/payments/create-intent`
+**Amaç:** Stripe payment intent oluşturma (gerçek ödeme)
+**Auth:** Required
+**Request:** PaymentRequest schema
+**Response:** 
+```json
+{
+  "payment_id": 1,
+  "client_secret": "pi_xxx_secret_yyy",
+  "payment_intent_id": "pi_xxx",
+  "amount": 2.50,
+  "chapter_count": 5
+}
+```
+**Kullanım:** Stripe ile gerçek ödeme başlatma
+**Özellik:** Frontend'de Stripe Elements ile ödeme tamamlama için client_secret döner
+
+---
+
+### 💰 **Payment Endpoints** (`/api/v1/payments`)
+
+#### `POST /api/v1/payments/create-intent`
+**Amaç:** Stripe payment intent oluşturma
+**Auth:** Required
+**Request:** PaymentRequest schema
+**Response:** Payment intent (client_secret)
+**Kullanım:** Ödeme başlatma
+
+#### `POST /api/v1/payments/confirm`
+**Amaç:** Ödeme onaylama
+**Auth:** Required
+**Query Params:** payment_intent_id
+**Response:** Confirmed payment
+**Kullanım:** Ödeme tamamlama
+
+#### `POST /api/v1/payments/webhook`
+**Amaç:** Stripe webhook handler
+**Auth:** None (Stripe signature)
+**Request:** Stripe webhook event
+**Response:** Success
+**Kullanım:** Stripe event handling
+
+---
+
+### 🔔 **Notification Endpoints** (`/api/v1/notifications`)
+
+#### `GET /api/v1/notifications`
+**Amaç:** Bildirim listesi
+**Auth:** Required
+**Query Params:**
+- `skip`, `limit`: Pagination
+- `unread_only`: Sadece okunmamışlar
+**Response:** Notification list
+**Kullanım:** Bildirimleri görüntüleme
+
+#### `PUT /api/v1/notifications/{notification_id}/read`
+**Amaç:** Bildirimi okundu işaretleme
+**Auth:** Required
+**Response:** Success message
+**Kullanım:** Bildirim okundu
+
+#### `PUT /api/v1/notifications/read-all`
+**Amaç:** Tüm bildirimleri okundu işaretleme
+**Auth:** Required
+**Response:** Success message
+**Kullanım:** Toplu okundu işaretleme
+
+#### `GET /api/v1/notifications/unread-count`
+**Amaç:** Okunmamış bildirim sayısı
+**Auth:** Required
+**Response:** Unread count
+**Kullanım:** Badge sayısı
+
+---
+
+### 👤 **User Endpoints** (`/api/v1/users`)
+
+#### `GET /api/v1/profile`
+**Amaç:** Kullanıcı profil bilgisi
+**Auth:** Required
+**Response:** User profile
+**Kullanım:** Profil görüntüleme
+
+#### `PUT /api/v1/profile`
+**Amaç:** Profil güncelleme
+**Auth:** Required
+**Request:** UpdateUserRequest schema
+**Response:** Updated profile
+**Kullanım:** Profil düzenleme
+
+#### `POST /api/v1/change-password`
+**Amaç:** Şifre değiştirme
+**Auth:** Required
+**Request:** ChangePasswordRequest schema
+**Response:** Success message
+**Kullanım:** Şifre değiştirme
+
+---
+
+### 🌍 **Public Endpoints** (`/api/v1/public`)
+
+#### `GET /api/v1/public/series`
+**Amaç:** Seri listesi (no auth required, cached)
+**Auth:** None
+**Query Params:** skip, limit, search, genre, status, sort
+**Response:** Series list
+**Kullanım:** Guest kullanıcı seri listesi
+
+#### `GET /api/v1/public/series/{series_id}`
+**Amaç:** Seri detay sayfası (no auth required)
+**Auth:** None
+**Response:** Series details with chapters, ratings
+**Kullanım:** Guest kullanıcı seri detayı
+
+#### `GET /api/v1/public/chapters/{chapter_id}`
+**Amaç:** Bölüm detay (no auth required)
+**Auth:** None
+**Response:** Chapter details, available translations
+**Kullanım:** Guest kullanıcı bölüm detayı
+
+#### `GET /api/v1/public/chapters/{chapter_id}/read/{translation_id}`
+**Amaç:** Bölüm okuma - sayfa listesi ve URL'leri (no auth required)
+**Auth:** None
+**Query Params:** 
+- `page`: Mevcut sayfa numarası (optional, default: 1)
+**Response:** 
+```json
+{
+  "chapter_id": 5,
+  "translation_id": 10,
+  "current_page": 1,
+  "total_pages": 20,
+  "pages": [
+    {
+      "page_number": 1,
+      "url": "/api/v1/files/Eleceed/en_to_tr/chapter_0005/page_001.jpg"
+    },
+    ...
+  ],
+  "source_lang": "en",
+  "target_lang": "tr"
+}
+```
+**Kullanım:** Guest kullanıcı bölüm okuma
+**Özellik:** View count otomatik artırılır
+
+#### `GET /api/v1/public/comments`
+**Amaç:** Yorum listesi (no auth required, cached)
+**Auth:** None
+**Query Params:** series_id, chapter_id, skip, limit
+**Response:** Comment list
+**Kullanım:** Guest kullanıcı yorum görüntüleme
+
+---
+
+### 📁 **File Endpoints** (`/api/v1/files`)
+
+#### `GET /api/v1/files/{series_name}/{source_lang}_to_{target_lang}/chapter_{chapter_number:04d}/page_{page_number:03d}.jpg`
+**Amaç:** Çevrilmiş sayfa görseli servisi (public, auth optional)
+**Auth:** Optional
+**Path Params:**
+- `series_name`: Seri adı (URL-safe)
+- `source_lang`: Kaynak dil kodu (en, ko, ja, vb.)
+- `target_lang`: Hedef dil kodu (tr, es, fr, vb.)
+- `chapter_number`: Bölüm numarası (4 haneli, zero-padded: 0001, 0002, ...)
+- `page_number`: Sayfa numarası (3 haneli, zero-padded: 001, 002, ...)
+**Response:** JPEG image file (binary)
+**Content-Type:** `image/jpeg`
+**Kullanım:** Sayfa görseli görüntüleme
+**Örnek URL:** `/api/v1/files/Eleceed/en_to_tr/chapter_0005/page_001.jpg`
+
+#### `GET /api/v1/files/{series_name}/chapters`
+**Amaç:** Seriye ait bölüm listesi (public, auth optional)
+**Auth:** Optional
+**Query Params:** source_lang, target_lang
+**Response:** Chapter list
+**Kullanım:** Bölüm listesi
+
+---
+
+### 📊 **Job Endpoints** (`/api/v1/jobs`)
+
+#### `GET /api/v1/jobs`
+**Amaç:** Çeviri iş geçmişi
+**Auth:** Required
+**Query Params:**
+- `skip`, `limit`: Pagination
+- `status_filter`: Status filtresi
+**Response:** Job history list
+**Kullanım:** İş geçmişini görüntüleme
+
+#### `DELETE /api/v1/jobs/{task_id}`
+**Amaç:** İş kaydını silme
+**Auth:** Required
+**Response:** Success message
+**Kullanım:** İş kaydı silme
+
+---
+
+### ⚙️ **Admin Endpoints** (`/api/v1/admin`)
+
+#### `DELETE /api/v1/admin/cache/clear`
+**Amaç:** Tüm cache'i temizleme (Admin only)
+**Auth:** Required (Admin)
+**Response:** Success message
+**Kullanım:** Cache temizleme
+
+#### `GET /api/v1/admin/stats`
+**Amaç:** Sistem istatistikleri (Admin only)
+**Auth:** Required (Admin)
+**Response:** System statistics
+**Kullanım:** Sistem durumu
+
+---
+
+### 📝 **Log Endpoints** (`/api/v1/admin/logs`)
+
+#### `GET /api/v1/admin/logs`
+**Amaç:** Uygulama loglarını görüntüleme (Admin only)
+**Auth:** Required (Admin)
+**Query Params:**
+- `level`: Log level (INFO, WARNING, ERROR, DEBUG) - optional
+- `module`: Module filtresi (partial match) - optional
+- `request_id`: Request ID filtresi (exact match) - optional
+- `user_id`: User ID filtresi - optional
+- `start_date`: Başlangıç tarihi (ISO format) - optional
+- `end_date`: Bitiş tarihi (ISO format) - optional
+- `skip`: Pagination offset (default: 0)
+- `limit`: Page size (default: 100, max: 1000)
+**Response:** 
+```json
+{
+  "logs": [
+    {
+      "id": 1,
+      "level": "ERROR",
+      "message": "Translation failed",
+      "module": "TranslationManager",
+      "request_id": "abc123",
+      "user_id": 5,
+      "ip_address": "192.168.1.1",
+      "user_agent": "Mozilla/5.0...",
+      "extra_data": {"error": "Connection timeout"},
+      "created_at": "2026-01-06T10:30:00Z"
+    }
+  ],
+  "total": 1500,
+  "skip": 0,
+  "limit": 100
+}
+```
+**Kullanım:** Log görüntüleme, hata takibi, debugging
+**Özellik:** Tüm loglar veritabanında saklanır (Log model)
+
+#### `GET /api/v1/admin/logs/stats`
+**Amaç:** Log istatistikleri (Admin only)
+**Auth:** Required (Admin)
+**Query Params:** 
+- `start_date`: Başlangıç tarihi (ISO format) - optional
+- `end_date`: Bitiş tarihi (ISO format) - optional
+**Response:** 
+```json
+{
+  "total": 1500,
+  "by_level": {
+    "INFO": 1200,
+    "WARNING": 200,
+    "ERROR": 100,
+    "DEBUG": 0
+  },
+  "top_modules": {
+    "TranslationManager": 500,
+    "LoggingMiddleware": 300,
+    "OCRService": 200
+  },
+  "error_rate": 6.67,
+  "errors": 100
+}
+```
+**Kullanım:** Log analizi, sistem sağlığı izleme, hata oranı takibi
+
+---
+
+### 🔄 **Cache Endpoints** (`/api/v1/cache`)
+
+#### `POST /api/v1/cache/refresh`
+**Amaç:** Manuel cache yenileme (belirli entity'ler için)
+**Auth:** Required
+**Query Params:** 
+- `series_id`: Seri cache'ini temizle (optional)
+- `chapter_id`: Bölüm cache'ini temizle (optional)
+- `comment_id`: Yorum cache'ini temizle (optional)
+**Response:** 
+```json
+{
+  "invalidated": ["series_1", "chapter_5", "comments"]
+}
+```
+**Kullanım:** Cache manuel yenileme (yeni içerik görünmüyorsa)
+**Not:** Hiçbir parametre verilmezse tüm cache temizlenir
+
+#### `GET /api/v1/cache/status`
+**Amaç:** Cache durumu ve istatistikleri
+**Auth:** Required
+**Response:** 
+```json
+{
+  "status": "enabled",
+  "total_keys": 1250,
+  "memory_used": "45.2MB",
+  "memory_peak": "50.1MB"
+}
+```
+**Kullanım:** Cache durumu kontrolü, Redis memory kullanımı
+**Not:** Redis bağlantısı yoksa `"status": "disabled"` döner
+
+---
+
+### ⚙️ **Site Settings Endpoints** (`/api/v1/settings`)
+
+#### `GET /api/v1/settings`
+**Amaç:** Site ayarları (public)
+**Auth:** None
+**Response:** Site settings
+**Kullanım:** Site konfigürasyonu görüntüleme
+
+#### `PUT /api/v1/settings`
+**Amaç:** Site ayarları güncelleme (Admin only)
+**Auth:** Required (Admin)
+**Request:** SiteSettingsUpdate schema
+**Response:** Updated settings
+**Kullanım:** Site ayarları düzenleme
+
+---
+
+### 📈 **Metrics Endpoints** (`/api/v1/metrics`)
+
+#### `GET /api/v1/metrics/summary`
+**Amaç:** Uygulama metrikleri özeti
+**Auth:** Required
+**Response:** 
+```json
+{
+  "api": {
+    "requests": 1234,
+    "errors": 5,
+    "timing": { "avg": 0.15, "p95": 0.5 }
+  },
+  "translation": {
+    "started": 100,
+    "completed": 95,
+    "failed": 5,
+    "timing": { "avg": 45.2, "p95": 120.0 }
+  }
+}
+```
+**Kullanım:** Performans izleme, sistem sağlığı kontrolü
+**Cache:** Yok (real-time data)
+
+---
+
+## 🎯 **ENDPOINT ÖZETİ**
+
+### Public Endpoints (No Auth)
+- ✅ Series list/detail
+- ✅ Chapter list/detail
+- ✅ Chapter reading
+- ✅ Comments viewing
+- ✅ Reactions viewing
+- ✅ File serving
+- ✅ Site settings
+
+### Authenticated Endpoints (Auth Required)
+- ✅ Translation requests
+- ✅ Comment create/update/delete
+- ✅ Reaction add/remove
+- ✅ Reading history
+- ✅ Bookmarks
+- ✅ Ratings
+- ✅ Notifications
+- ✅ User profile
+- ✅ Subscription management
+
+### Admin Endpoints (Admin Required)
+- ✅ Cache management
+- ✅ System statistics
+- ✅ Log viewing
+- ✅ Site settings update
+
+**TOPLAM: 50+ endpoint** 🎉
+
+### 📊 **Endpoint İstatistikleri**
+
+| Kategori | Endpoint Sayısı | Auth Gereksinimi |
+|----------|----------------|------------------|
+| Authentication | 3 | Mixed |
+| Translation | 5 | Required |
+| Series | 6 | Mixed (Public + Admin) |
+| Comments | 6 | Mixed (Public + Required) |
+| Reactions | 3 | Mixed (Public + Required) |
+| Reading | 6 | Required |
+| Subscription | 3 | Required |
+| Payments | 3 | Required |
+| Notifications | 4 | Required |
+| Users | 3 | Required |
+| Public | 5 | None |
+| Files | 2 | Optional |
+| Jobs | 2 | Required |
+| Admin | 2 | Admin |
+| Logs | 2 | Admin |
+| Cache | 2 | Required |
+| Site Settings | 2 | Mixed (Public + Admin) |
+| Metrics | 1 | Required |
+| **TOPLAM** | **60+** | - |
+
+---
+
+## ✅ **SONUÇ**
+
+Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, kullanılan teknolojileri, dosya yapısını ve tüm endpoint'lerin açıklamalarını içermektedir.
+
+**Proje %100 tamamlanmış ve production-ready durumda!** 🚀
+
+---
+
+**Son Güncelleme:** January 6, 2026
+
