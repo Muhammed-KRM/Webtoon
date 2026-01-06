@@ -11,6 +11,7 @@ from app.models.reading import ReadingHistory, Bookmark, Rating, Notification
 from app.models.comment_like import CommentLike
 from app.models.reaction import Reaction
 from app.models.log import Log
+from app.models.scraper_config import ScraperConfig
 
 __all__ = [
     "User", "TranslationJob",
@@ -19,6 +20,7 @@ __all__ = [
     "Subscription", "Payment",
     "SiteSettings",
     "ReadingHistory", "Bookmark", "Rating", "Notification",
-    "Reaction", "Log"
+    "Reaction", "Log",
+    "ScraperConfig"
 ]
 

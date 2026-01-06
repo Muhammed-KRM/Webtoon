@@ -6,10 +6,15 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import io
 import textwrap
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Optional
 from pathlib import Path
 from loguru import logger
 from app.core.config import settings
+
+# Thread pool for CPU-intensive operations (prevents event loop blocking)
+_image_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="image_processor")
 
 
 class ImageProcessor:
@@ -148,6 +153,32 @@ class ImageProcessor:
                 return False
         return True
     
+    async def process_image_async(
+        self,
+        image_bytes: bytes,
+        text_blocks: List[Dict],
+        translated_texts: List[str]
+    ) -> bytes:
+        """
+        Async wrapper for process_image (prevents event loop blocking)
+        
+        Args:
+            image_bytes: Original image as bytes
+            text_blocks: List of text blocks with coordinates
+            translated_texts: List of translated texts
+            
+        Returns:
+            Processed image as bytes
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            _image_executor,
+            self.process_image,
+            image_bytes,
+            text_blocks,
+            translated_texts
+        )
+    
     def process_image(
         self,
         image_bytes: bytes,
@@ -156,6 +187,7 @@ class ImageProcessor:
     ) -> bytes:
         """
         Process image: remove original text and add translated text
+        (Synchronous version - CPU-intensive operations)
         
         Args:
             image_bytes: Original image as bytes

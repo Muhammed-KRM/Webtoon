@@ -3,6 +3,8 @@ OCR Service - Text detection using EasyOCR
 """
 import easyocr
 import numpy as np
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 from loguru import logger
 from app.core.config import settings
@@ -10,6 +12,9 @@ import cv2
 
 # Global OCR reader (lazy initialization)
 _ocr_reader = None
+
+# Thread pool for CPU-intensive OCR operations (prevents event loop blocking)
+_ocr_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="ocr_service")
 
 
 def get_ocr_reader():
@@ -31,6 +36,26 @@ class OCRService:
     def __init__(self):
         """Initialize OCR service"""
         self.reader = get_ocr_reader()
+    
+    async def detect_text_blocks_async(
+        self,
+        image_bytes: bytes
+    ) -> List[Dict[str, Any]]:
+        """
+        Async wrapper for detect_text_blocks (prevents event loop blocking)
+        
+        Args:
+            image_bytes: Image bytes
+            
+        Returns:
+            List of text blocks with coordinates and text
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            _ocr_executor,
+            self.detect_text_blocks,
+            image_bytes
+        )
     
     def detect_text_blocks(
         self,

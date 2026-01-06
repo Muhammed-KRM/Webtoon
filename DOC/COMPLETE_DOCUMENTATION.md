@@ -75,6 +75,23 @@ DATABASE_URL=postgresql://user:pass@localhost/webtoon_db
 # DATABASE_URL=sqlite:///./webtoon.db
 OPENAI_API_KEY=sk-your-openai-api-key-here
 REDIS_URL=redis://localhost:6379/0
+
+# CDN Settings (Opsiyonel)
+CDN_ENABLED=false
+CDN_TYPE=s3  # or "minio"
+
+# AWS S3 (CDN_TYPE=s3 için)
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=
+
+# MinIO (CDN_TYPE=minio için)
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=
+MINIO_SECRET_KEY=
+MINIO_SECURE=false
+MINIO_BUCKET_NAME=webtoon-images
 ```
 
 Detaylı rehber: `DOC/API_KEY_REHBERI.md`
@@ -155,6 +172,8 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
 - **Nerede:** `app/services/ocr_service.py`
 - **Neden:** Görüntülerden metin algılama
 - **Kullanım:** Webtoon sayfalarındaki metinleri tespit etme
+- **Event Loop Protection:** `run_in_executor` ile thread pool'da çalışır
+- **GPU Support:** Config'den GPU kullanımı açılıp kapatılabilir
 
 ### Translation Engine
 **OpenAI GPT-4o-mini**
@@ -170,6 +189,9 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
   - In-painting (metin silme)
   - Metin yerleştirme
   - Font boyutlandırma
+  - Text wrapping (textwrap)
+  - WebP format support
+- **Event Loop Protection:** `run_in_executor` ile thread pool'da çalışır
 
 ### Authentication
 **JWT (OAuth2)**
@@ -319,7 +341,8 @@ webtoon-ai-translator/
 │   │           ├── public.py           # Public (no auth) endpoints
 │   │           ├── discovery.py        # Discovery endpoints (trending, featured, recommendations)
 │   │           ├── cache.py            # Cache management endpoints
-│   │           └── logs.py             # Log viewing endpoints
+│   │           ├── logs.py             # Log viewing endpoints
+│   │           └── translation_editor.py # Human-in-the-Loop editor endpoints
 │   │
 │   ├── 📁 core/                        # Çekirdek modüller (14 dosya)
 │   │   ├── config.py                    # Uygulama ayarları
@@ -404,6 +427,7 @@ webtoon-ai-translator/
 │   │   ├── site_settings.py             # SiteSettings model
 │   │   ├── reading.py                   # ReadingHistory, Bookmark, Rating, Notification
 │   │   ├── log.py                       # Log model
+│   │   ├── scraper_config.py           # ScraperConfig model (dynamic CSS selectors)
 │   │   └── __init__.py                  # Model exports
 │   │
 │   ├── 📁 schemas/                     # Pydantic schemas (9 dosya)
@@ -471,11 +495,19 @@ webtoon-ai-translator/
 │   │   │                                 # - Reader container detection
 │   │   │                                 # - Image URL extraction
 │   │   │
+│   │   ├── scraper_config_service.py   # Dynamic scraper configuration
+│   │   │                                 # - CSS selector management
+│   │   │                                 # - Database-based config
+│   │   │                                 # - Default selector fallback
+│   │   │                                 # - Admin config updates
+│   │   │
 │   │   ├── ocr_service.py               # OCR (EasyOCR)
 │   │   │                                 # - EasyOCR reader initialization
 │   │   │                                 # - Text detection
 │   │   │                                 # - Bounding box extraction
 │   │   │                                 # - GPU support (optional)
+│   │   │                                 # - Async wrapper (run_in_executor)
+│   │   │                                 # - Event loop blocking prevention
 │   │   │
 │   │   ├── ai_translator.py             # OpenAI translation
 │   │   │                                 # - GPT-4o-mini integration
@@ -492,11 +524,16 @@ webtoon-ai-translator/
 │   │   │                                 # - Multi-line text support
 │   │   │                                 # - Text wrapping (textwrap)
 │   │   │                                 # - WebP format support (~50% smaller)
+│   │   │                                 # - Async wrapper (run_in_executor)
+│   │   │                                 # - Event loop blocking prevention
 │   │   │
 │   │   ├── file_manager.py              # File organization
 │   │   │                                 # - Folder structure creation
 │   │   │                                 # - Chapter/page naming
 │   │   │                                 # - Metadata saving
+│   │   │                                 # - CDN integration (S3/MinIO)
+│   │   │                                 # - Automatic CDN upload
+│   │   │                                 # - Local fallback
 │   │   │
 │   │   ├── cache_service.py             # Redis caching
 │   │   │                                 # - Translation result caching
@@ -683,6 +720,10 @@ webtoon-ai-translator/
 - ✅ Context-aware translation (tutarlı karakter isimleri)
 - ✅ Batch translation (bölüm aralığı)
 - ✅ Automatic translation publishing
+- ✅ **Glossary System**: Seri bazlı sözlük (tutarlı çeviri)
+- ✅ **Smart Chunking**: Token limiti yönetimi (büyük bölümler için)
+- ✅ **Human-in-the-Loop Editor**: Manuel çeviri düzenleme
+- ✅ **Event Loop Protection**: CPU-intensive işlemler thread pool'da
 
 ### ✅ **Okuma Platformu Özellikleri**
 - ✅ Series management (seri yönetimi)
@@ -691,6 +732,13 @@ webtoon-ai-translator/
 - ✅ Reading history (okuma geçmişi)
 - ✅ Bookmarks (favoriler)
 - ✅ Ratings (puanlar)
+
+### ✅ **Infrastructure & Performance**
+- ✅ **CDN Integration**: S3/MinIO desteği (disk tasarrufu, hız)
+- ✅ **Dinamik Scraper Config**: CSS selector'lar DB'den yönetilir
+- ✅ **Event Loop Protection**: CPU-intensive işlemler thread pool'da
+- ✅ **WebP Format**: %50 daha küçük dosya boyutu
+- ✅ **Cache/Lock Mechanism**: Duplicate translation prevention
 
 ### ✅ **Sosyal Özellikler**
 - ✅ Comment system (yorum sistemi)
@@ -869,6 +917,49 @@ webtoon-ai-translator/
 **Response:** BatchTranslationResponse
 **Kullanım:** Esnek bölüm seçimi (aralık, tek tek, karışık)
 **Özellik:** URL pattern otomatik algılama ve chapter numarası yerleştirme
+
+---
+
+### ✏️ **Translation Editor Endpoints** (`/api/v1/translation`)
+
+#### `GET /api/v1/translation/{task_id}/review`
+**Amaç:** Çeviri sonucunu manuel inceleme için getir (Human-in-the-Loop)
+**Auth:** Required
+**Query Params:** `page_index` (optional)
+**Response:** Translation review data (original + translated texts side-by-side)
+**Kullanım:** AI çevirisini inceleme, düzenleme öncesi görüntüleme
+
+#### `POST /api/v1/translation/review`
+**Amaç:** Çeviriyi onaylama/reddetme/düzenleme
+**Auth:** Required
+**Request:**
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "action": "approve|reject|edit",
+  "edited_text": "Düzenlenmiş metin"  // action=edit için gerekli
+}
+```
+**Response:** Review result
+**Kullanım:** Çeviriyi onaylama, reddetme veya düzenleme
+
+#### `POST /api/v1/translation/edit`
+**Amaç:** Spesifik bir çeviri bloğunu manuel düzenleme
+**Auth:** Required
+**Request:**
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "original_text": "Orijinal metin",
+  "translated_text": "Düzenlenmiş çeviri"
+}
+```
+**Response:** Edited translation
+**Kullanım:** Manuel çeviri düzeltme
 
 ---
 
@@ -1985,6 +2076,203 @@ Metinlerin balonlara düzgün sığması için geliştirilmiş text wrapping.
 2. Her satırın genişliği font metrikleri ile kontrol edilir
 3. Satır çok genişse karakter bazlı bölme yapılır
 4. Sonuç: Balona sığan, okunabilir metin
+
+---
+
+### ⚡ **Event Loop Blocking Düzeltmesi**
+
+#### Genel Bakış
+CPU-intensive işlemler (OCR, Image Processing) event loop'u bloklamaması için `run_in_executor` ile thread pool'a taşındı.
+
+**Lokasyon:** `app/services/image_processor.py`, `app/services/ocr_service.py`
+
+#### Özellikler
+- ✅ **Async Wrappers**: `process_image_async()`, `detect_text_blocks_async()` eklendi
+- ✅ **Thread Pool**: `ThreadPoolExecutor` ile ayrı thread'lerde çalışır
+- ✅ **Event Loop Protection**: FastAPI event loop bloklanmaz
+- ✅ **Celery Compatibility**: Celery task'lar zaten ayrı process'lerde, ama best practice için eklendi
+
+#### Kullanım
+```python
+# Async context'te kullanım
+processed_image = await image_processor.process_image_async(
+    image_bytes, blocks, translations
+)
+
+# Sync context'te (Celery) kullanım
+processed_image = image_processor.process_image(
+    image_bytes, blocks, translations
+)
+```
+
+---
+
+### 🔧 **Dinamik Scraper Configuration**
+
+#### Genel Bakış
+CSS selector'lar artık veritabanından yönetilebilir. Site yapısı değiştiğinde kod değiştirmeden admin panelinden güncellenebilir.
+
+**Lokasyon:** `app/models/scraper_config.py`, `app/services/scraper_config_service.py`
+
+#### ScraperConfig Modeli
+- `site_name`: Site adı (webtoons.com, asuracomic.net)
+- `selectors`: CSS selector'lar (JSON formatında)
+  ```json
+  {
+    "container": "div.reading-content",
+    "image": "img",
+    "image_attr": "data-src",
+    "title": "h1.chapter-title",
+    "next_chapter": "a.next-chapter"
+  }
+  ```
+- `fallback_selectors`: Yedek selector'lar
+- `config`: Ekstra config (user-agent, headers, timeout, vb.)
+- `is_active`: Aktif/pasif durumu
+- `last_updated`: Son güncelleme tarihi
+- `updated_by`: Güncelleyen admin
+
+#### ScraperConfigService
+**Metodlar:**
+- `get_config()`: Site için config getir
+- `get_default_selectors()`: Default selector'lar (fallback)
+- `get_selectors()`: DB'den veya default'tan selector'ları getir
+- `update_config()`: Config güncelle (admin tarafından)
+
+#### Kullanım
+```python
+# Scraper içinde kullanım
+selectors = ScraperConfigService.get_selectors(db, "webtoons.com")
+container = soup.select_one(selectors["container"])
+images = container.find_all(selectors["image"])
+```
+
+#### Avantajlar
+- ✅ **Kod Değiştirmeden Güncelleme**: Site yapısı değiştiğinde sadece DB'den güncelle
+- ✅ **Fallback Sistemi**: DB'de yoksa default selector'lar kullanılır
+- ✅ **Admin Yönetimi**: Admin panelinden kolayca güncellenebilir
+- ✅ **Version Control**: `last_updated` ve `updated_by` ile takip
+
+---
+
+### ✏️ **Human-in-the-Loop Editor**
+
+#### Genel Bakış
+AI çevirilerini manuel olarak inceleyip düzenleyebilme özelliği.
+
+**Lokasyon:** `app/api/v1/endpoints/translation_editor.py`
+
+#### Endpoint'ler
+
+**1. Çeviri İnceleme**
+```
+GET /api/v1/translation/{task_id}/review?page_index={page}
+```
+- Orijinal metin ve AI çevirisini yan yana gösterir
+- Sayfa ve blok bazında inceleme
+- Onaylama/reddetme/düzenleme seçenekleri
+
+**2. Çeviri Onaylama/Reddetme/Düzenleme**
+```
+POST /api/v1/translation/review
+```
+Request Body:
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "action": "approve|reject|edit",
+  "edited_text": "Düzenlenmiş metin" // action=edit için gerekli
+}
+```
+
+**3. Manuel Düzenleme**
+```
+POST /api/v1/translation/edit
+```
+Request Body:
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "original_text": "Orijinal metin",
+  "translated_text": "Düzenlenmiş çeviri"
+}
+```
+
+#### Özellikler
+- ✅ **Yan Yana Görüntüleme**: Orijinal ve çeviri yan yana
+- ✅ **Blok Bazında Düzenleme**: Her metin bloğu ayrı ayrı düzenlenebilir
+- ✅ **Onaylama Sistemi**: Onaylanan çeviriler finalize edilir
+- ✅ **Re-processing**: Düzenlenen metinlerle resim yeniden işlenir
+
+#### Kullanım Senaryosu
+1. Kullanıcı çeviri başlatır
+2. Çeviri tamamlandığında review endpoint'ine gider
+3. Orijinal ve çeviriyi yan yana görür
+4. Hatalı çevirileri düzenler
+5. Onaylar ve finalize eder
+
+---
+
+### ☁️ **CDN Integration (S3/MinIO)**
+
+#### Genel Bakış
+İşlenmiş resimler CDN'e (S3/MinIO) yüklenir, disk kullanımı azalır ve hız artar.
+
+**Lokasyon:** `app/services/cdn_service.py`, `app/services/file_manager.py`
+
+#### CDNService
+**Desteklenen CDN'ler:**
+- **AWS S3**: Tam S3 desteği
+- **MinIO**: Self-hosted S3-compatible storage
+
+#### Özellikler
+- ✅ **Otomatik Upload**: Resimler CDN'e otomatik yüklenir
+- ✅ **Local Fallback**: CDN başarısız olursa local'e kaydedilir
+- ✅ **URL Generation**: CDN URL'leri otomatik oluşturulur
+- ✅ **Image Deletion**: CDN'den resim silme desteği
+- ✅ **Configurable**: `.env`'den açılıp kapatılabilir
+
+#### Config Ayarları
+```env
+# CDN Settings
+CDN_ENABLED=true
+CDN_TYPE=s3  # or "minio"
+
+# AWS S3
+AWS_ACCESS_KEY_ID=your-key
+AWS_SECRET_ACCESS_KEY=your-secret
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=webtoon-images
+
+# MinIO
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_SECURE=false
+MINIO_BUCKET_NAME=webtoon-images
+```
+
+#### Kullanım
+**FileManager** otomatik olarak CDN'e yükler:
+```python
+# FileManager.save_chapter() içinde otomatik
+if self.cdn_service.cdn_enabled:
+    cdn_url = self.cdn_service.upload_image(
+        image_bytes=page_bytes,
+        object_key=object_key,
+        content_type="image/webp"
+    )
+```
+
+#### Avantajlar
+- ✅ **Disk Tasarrufu**: Sunucu diskinde yer kaplamaz
+- ✅ **Hız**: CDN'den daha hızlı servis edilir
+- ✅ **Ölçeklenebilirlik**: Trafik artışında sorun olmaz
+- ✅ **Yedekleme**: CDN'de otomatik yedekleme
 
 ---
 

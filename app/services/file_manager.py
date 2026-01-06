@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from loguru import logger
 from app.core.config import settings
+from app.services.cdn_service import CDNService
 
 
 class FileManager:
@@ -15,6 +16,7 @@ class FileManager:
     def __init__(self):
         self.storage_path = Path(settings.STORAGE_PATH)
         self.storage_path.mkdir(parents=True, exist_ok=True)
+        self.cdn_service = CDNService()  # Initialize CDN service
     
     def save_chapter(
         self,
@@ -63,31 +65,62 @@ class FileManager:
             chapter_folder.mkdir(parents=True, exist_ok=True)
             
             # Save pages (detect format from bytes)
+            cdn_urls = []  # Store CDN URLs if CDN enabled
+            
             for idx, page_bytes in enumerate(pages, start=1):
                 # Detect image format from magic bytes
                 # WebP: RIFF...WEBP
                 if page_bytes.startswith(b'RIFF') and b'WEBP' in page_bytes[:12]:
                     extension = "webp"
+                    content_type = "image/webp"
                 # JPEG: FF D8 FF
                 elif page_bytes.startswith(b'\xff\xd8\xff'):
                     extension = "jpg"
+                    content_type = "image/jpeg"
                 # PNG: 89 50 4E 47
                 elif page_bytes.startswith(b'\x89PNG'):
                     extension = "png"
+                    content_type = "image/png"
                 else:
                     extension = "jpg"  # Default fallback
+                    content_type = "image/jpeg"
                 
+                # Generate object key for CDN
+                object_key = f"{safe_series_name}/{source_lang}_to_{target_lang}/chapter_{chapter_number:04d}/page_{idx:03d}.{extension}"
+                
+                # Upload to CDN if enabled
+                cdn_url = None
+                if self.cdn_service.cdn_enabled:
+                    cdn_url = self.cdn_service.upload_image(
+                        image_bytes=page_bytes,
+                        object_key=object_key,
+                        content_type=content_type
+                    )
+                    if cdn_url:
+                        cdn_urls.append(cdn_url)
+                        logger.info(f"Uploaded page {idx} to CDN: {cdn_url}")
+                
+                # Also save locally (fallback if CDN fails or disabled)
                 page_path = chapter_folder / f"page_{idx:03d}.{extension}"
                 with open(page_path, 'wb') as f:
                     f.write(page_bytes)
             
-            # Save metadata
+            # Save metadata (include CDN URLs if available)
             if metadata:
+                if cdn_urls:
+                    metadata['cdn_urls'] = cdn_urls
+                    metadata['cdn_enabled'] = True
+                else:
+                    metadata['cdn_enabled'] = False
+                
                 metadata_path = chapter_folder / "metadata.json"
                 with open(metadata_path, 'w', encoding='utf-8') as f:
                     json.dump(metadata, f, ensure_ascii=False, indent=2)
             
             logger.info(f"Saved chapter {chapter_number} to: {chapter_folder}")
+            if cdn_urls:
+                logger.info(f"Chapter {chapter_number} uploaded to CDN with {len(cdn_urls)} images")
+            
             return str(chapter_folder)
             
         except Exception as e:

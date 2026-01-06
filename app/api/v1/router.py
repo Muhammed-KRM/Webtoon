@@ -5,7 +5,8 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import (
     auth, translate, jobs, files, admin, metrics, users,
     series, comments, subscription, site_settings,
-    reading, notifications, payments, public, reactions, logs, cache, admin_content, discovery
+    reading, notifications, payments, public, reactions, logs, cache, admin_content, discovery,
+    translation_editor
 )
 
 api_router = APIRouter()
@@ -30,4 +31,5 @@ api_router.include_router(reactions.router, prefix="", tags=["Reactions"])
 api_router.include_router(logs.router, prefix="/admin", tags=["Logs"])
 api_router.include_router(cache.router, prefix="", tags=["Cache"])
 api_router.include_router(discovery.router, prefix="", tags=["Discovery"])
+api_router.include_router(translation_editor.router, prefix="", tags=["Translation Editor"])
 
