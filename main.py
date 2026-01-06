@@ -35,7 +35,7 @@ app = FastAPI(
 
 # Custom Middleware (order matters!)
 app.add_middleware(RequestIDMiddleware)  # First: Add request ID
-app.add_middleware(CompressionMiddleware)  # Second: Response compression
+# app.add_middleware(CompressionMiddleware)  # Disabled: Causes issues with Swagger UI
 app.add_middleware(LoggingMiddleware)  # Third: Log requests
 app.add_middleware(SecurityHeadersMiddleware)  # Fourth: Security headers
 

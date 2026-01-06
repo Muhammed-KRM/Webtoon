@@ -26,7 +26,7 @@ router = APIRouter()
 def get_trending_series(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=50),
-    period: str = Query("week", regex="^(day|week|month)$"),
+    period: str = Query("week", pattern="^(day|week|month)$"),
     db: Session = Depends(get_db)
 ):
     """
@@ -245,7 +245,7 @@ def get_recommendations(
 def get_popular_series(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=50),
-    period: str = Query("all", regex="^(day|week|month|all)$"),
+    period: str = Query("all", pattern="^(day|week|month|all)$"),
     db: Session = Depends(get_db)
 ):
     """

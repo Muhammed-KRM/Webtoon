@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.get("/logs", response_model=BaseResponse[list])
 def get_logs(
-    level: Optional[str] = Query(None, regex="^(INFO|WARNING|ERROR|DEBUG)$"),
+    level: Optional[str] = Query(None, pattern="^(INFO|WARNING|ERROR|DEBUG)$"),
     module: Optional[str] = None,
     request_id: Optional[str] = None,
     user_id: Optional[int] = None,

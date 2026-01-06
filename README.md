@@ -1,152 +1,324 @@
-# 🚀 Webtoon AI Translator
+# 🎨 Webtoon AI Translator
 
-Profesyonel webtoon makine çeviri uygulaması. Görüntü işleme (Computer Vision), doğal dil işleme (NLP) ve asenkron iş akışları ile desteklenen kurumsal seviye bir çeviri platformu.
+> Profesyonel Webtoon Çeviri ve Yayın Platformu
 
-## ⚡ Hızlı Başlangıç
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-### 1. İlk Kurulum (Sadece bir kez)
+## 🚀 Hızlı Başlangıç
 
-```bash
-# Otomatik kurulum
-SETUP.bat
-```
-
-Bu script:
-- ✅ Sanal ortam oluşturur
-- ✅ Paketleri yükler
-- ✅ `.env` dosyası oluşturur
-- ✅ Klasörleri hazırlar
-
-### 2. Environment Variables Ayarla
-
-`.env` dosyasını düzenleyin:
-- `SECRET_KEY`: En az 32 karakter rastgele string
-- `OPENAI_API_KEY`: API key'inizi ekleyin
-- `DATABASE_URL`: SQLite veya PostgreSQL
-
-**Detaylar:** `ENV_OLUSTUR.md` ve `DOC/API_KEY_REHBERI.md`
-
-### 3. Projeyi Başlat
+### Yeni Bilgisayarda Kurulum (5 Dakika)
 
 ```bash
-# Tek komutla her şeyi başlat
-START.bat
+# 1. Projeyi indirin
+git clone https://github.com/KULLANICI_ADI/Webtoon.git
+cd Webtoon
+
+# 2. Otomatik kurulum
+KURULUM_SIHIRBAZI.bat
+
+# 3. Sistemi başlatın
+START_ALL.bat
 ```
 
-Bu script:
-- ✅ Redis'i başlatır (Docker ile)
-- ✅ Celery Worker'ı başlatır (ayrı pencere)
-- ✅ FastAPI'yi başlatır
-
-### 4. Durdurma
-
-```bash
-# Tüm servisleri durdur
-STOP.bat
-```
-
-## 📁 Dosya Yapısı
-
-```
-Webtoon/
-├── START.bat          # Projeyi başlat (TEK KOMUT!)
-├── STOP.bat           # Tüm servisleri durdur
-├── RESTART.bat        # Yeniden başlat
-├── CHECK.bat          # Durum kontrolü
-├── SETUP.bat          # İlk kurulum
-├── main.py            # FastAPI uygulama
-├── app/               # Uygulama kodu
-│   ├── api/           # API endpoints
-│   ├── core/          # Config, security
-│   ├── services/      # Business logic
-│   ├── operations/    # Celery tasks
-│   └── models/        # Database models
-└── DOC/               # Dokümantasyon
-```
-
-## 🎯 Kullanım
-
-### API Dokümantasyonu
-
-Proje başladıktan sonra:
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
-- **Health Check:** http://localhost:8000/health
-
-### İş Akışı
-
-1. **Register/Login:** `POST /api/v1/auth/register` veya `/login`
-2. **Çeviri Başlat:** `POST /api/v1/translate/start`
-3. **Durum Kontrol:** `GET /api/v1/translate/status/{task_id}`
-4. **Sonuç Al:** `GET /api/v1/translate/result/{task_id}`
-
-## 🔧 Yönetim Komutları
-
-| Komut | Açıklama |
-|-------|----------|
-| `SETUP.bat` | İlk kurulum (sadece bir kez) |
-| `START.bat` | Tüm servisleri başlat |
-| `STOP.bat` | Tüm servisleri durdur |
-| `RESTART.bat` | Yeniden başlat |
-| `CHECK.bat` | Durum kontrolü |
-
-## ✨ Özellikler
-
-- ✅ **Otomatik Web Scraping** - Webtoon sayfalarından görselleri indirme
-- ✅ **Akıllı OCR** - EasyOCR ile metin tespiti
-- ✅ **Context-Aware Çeviri** - OpenAI GPT-4o-mini ile tutarlı çeviri
-- ✅ **Cached Input** - %50 maliyet tasarrufu
-- ✅ **Görüntü İşleme** - In-painting + Türkçe metin yerleştirme
-- ✅ **Akıllı Metin Sığdırma** - Otomatik font boyutu ayarlama
-- ✅ **Cache Sistemi** - Aynı bölümü tekrar çevirmeme
-- ✅ **Asenkron İşlem** - Celery + Redis
-
-## 📚 Dokümantasyon
-
-- **Kurulum:** `KURULUM.md`
-- **Hızlı Başlangıç:** `DOC/HIZLI_BASLANGIC.md`
-- **API Key Rehberi:** `DOC/API_KEY_REHBERI.md`
-- **Environment Variables:** `ENV_OLUSTUR.md`
-- **Maliyet Analizi:** `DOC/MaliyetAnalizi.md`
-- **Geliştirme Planı:** `DOC/GelistirmePlani.md`
-
-## 🛠️ Teknoloji Yığını
-
-- **Backend:** FastAPI
-- **Database:** PostgreSQL / SQLite
-- **Task Queue:** Celery + Redis
-- **OCR:** EasyOCR
-- **Translation:** OpenAI GPT-4o-mini
-- **Image Processing:** OpenCV + Pillow
-
-## ⚠️ Önemli Notlar
-
-1. **Scraper Service:** `app/services/scraper_service.py` dosyasında hedef webtoon sitesine özel scraping mantığını implemente etmeniz gerekiyor.
-
-2. **Font Dosyaları:** `fonts/` klasörüne Türkçe karakter desteği olan font dosyaları ekleyin (opsiyonel).
-
-3. **API Key:** OpenAI API key'inizi `.env` dosyasına ekleyin ve kredi yükleyin.
-
-## 🐛 Sorun Giderme
-
-### Servisler başlamıyor
-```bash
-CHECK.bat
-```
-Bu komut tüm servislerin durumunu kontrol eder.
-
-### Redis hatası
-```bash
-docker run -d -p 6379:6379 --name redis redis:latest
-```
-
-### Celery hatası (Windows)
-`--pool=solo` parametresi zorunludur (START.bat'da zaten var).
-
-## 📝 Lisans
-
-Bu proje eğitim amaçlıdır.
+**Tarayıcınızda:** http://localhost:8000/docs
 
 ---
 
-**Sorularınız için:** `DOC/` klasöründeki dokümanlara bakın.
+## 📋 Özellikler
+
+### ✨ Çeviri Özellikleri
+
+- 🌐 **Çoklu Dil Desteği** - 50+ dil arası çeviri
+- 🤖 **AI Destekli Çeviri** - OpenAI GPT entegrasyonu
+- 📝 **Glossary Sistemi** - Tutarlı terim çevirisi
+- 🎯 **Context-Aware** - Bağlama duyarlı çeviri
+- 🔄 **Batch Translation** - Toplu çeviri desteği
+
+### 🖼️ Görüntü İşleme
+
+- 🎨 **OCR (Optical Character Recognition)** - EasyOCR
+- 🧹 **Text Cleaning** - Otomatik metin temizleme
+- ✍️ **Text Rendering** - Çevrilmiş metni görüntüye ekleme
+- 🖌️ **Font Customization** - Özelleştirilebilir fontlar
+- 📐 **Auto Layout** - Otomatik metin yerleştirme
+
+### 📚 İçerik Yönetimi
+
+- 📖 **Series Management** - Seri yönetimi
+- 📄 **Chapter Organization** - Bölüm organizasyonu
+- 🏷️ **Tag System** - Etiket sistemi
+- ⭐ **Rating & Reviews** - Değerlendirme sistemi
+- 💬 **Comments** - Yorum sistemi
+
+### 👥 Kullanıcı Özellikleri
+
+- 🔐 **Authentication** - JWT tabanlı kimlik doğrulama
+- 📊 **Reading History** - Okuma geçmişi
+- 🔖 **Bookmarks** - Yer işaretleri
+- 🔔 **Notifications** - Bildirimler
+- 💳 **Subscription** - Abonelik sistemi
+
+### 🛠️ Teknik Özellikler
+
+- ⚡ **FastAPI** - Yüksek performanslı API
+- 🗄️ **SQLAlchemy ORM** - Veritabanı yönetimi
+- 📦 **Redis Cache** - Hızlı önbellekleme
+- 🔄 **Celery** - Arka plan işleri
+- 🐳 **Docker** - Kolay deployment
+- 📝 **Auto Documentation** - Swagger/ReDoc
+
+---
+
+## 📦 Kurulum
+
+### Gereksinimler
+
+- Python 3.10+
+- Docker Desktop
+- Git
+
+### Detaylı Kurulum
+
+**Adım 1: Gerekli Programları Kurun**
+
+1. **Python:** https://www.python.org/downloads/
+2. **Docker:** https://www.docker.com/products/docker-desktop/
+3. **Git:** https://git-scm.com/download/win
+
+**Adım 2: Projeyi İndirin**
+
+```bash
+git clone https://github.com/KULLANICI_ADI/Webtoon.git
+cd Webtoon
+```
+
+**Adım 3: Kurulum Sihirbazını Çalıştırın**
+
+```bash
+KURULUM_SIHIRBAZI.bat
+```
+
+**Adım 4: Sistemi Başlatın**
+
+```bash
+START_ALL.bat
+```
+
+**Detaylı kurulum için:** [ADIM_ADIM_KURULUM.md](ADIM_ADIM_KURULUM.md)
+
+---
+
+## 🎯 Kullanım
+
+### Sistemi Başlatma
+
+```bash
+START_ALL.bat
+```
+
+### Sistemi Durdurma
+
+```bash
+STOP_ALL.bat
+```
+
+### API Dokümantasyonu
+
+- **Swagger UI:** http://localhost:8000/docs
+- **ReDoc:** http://localhost:8000/redoc
+
+### İlk Kullanım
+
+1. http://localhost:8000/docs adresine gidin
+2. `/api/v1/auth/register` ile kayıt olun
+3. `/api/v1/auth/login` ile giriş yapın
+4. Token'ı alın ve "Authorize" butonuna tıklayın
+5. API'yi keşfedin!
+
+---
+
+## 📚 Dokümantasyon
+
+| Dosya                                                          | Açıklama                 |
+| -------------------------------------------------------------- | ------------------------ |
+| [KURULUM_DOKUMANI.md](KURULUM_DOKUMANI.md)                     | Kapsamlı kurulum rehberi |
+| [ADIM_ADIM_KURULUM.md](ADIM_ADIM_KURULUM.md)                   | Adım adım kurulum        |
+| [HIZLI_BASLANGIC.md](HIZLI_BASLANGIC.md)                       | Hızlı başlangıç kılavuzu |
+| [DOSYALAR_REHBERI.md](DOSYALAR_REHBERI.md)                     | Dosyalar rehberi         |
+| [DOC/COMPLETE_DOCUMENTATION.md](DOC/COMPLETE_DOCUMENTATION.md) | Tam API dokümantasyonu   |
+
+---
+
+## 🏗️ Proje Yapısı
+
+```
+Webtoon/
+├── app/
+│   ├── api/          # API endpoints
+│   ├── core/         # Core functionality
+│   ├── models/       # Database models
+│   ├── schemas/      # Pydantic schemas
+│   ├── services/     # Business logic
+│   └── tasks/        # Celery tasks
+├── tests/            # Test files
+├── DOC/              # Documentation
+├── START_ALL.bat     # Start system
+├── STOP_ALL.bat      # Stop system
+└── README.md         # This file
+```
+
+---
+
+## 🔧 Teknolojiler
+
+### Backend
+
+- **FastAPI** - Modern web framework
+- **SQLAlchemy** - ORM
+- **Pydantic** - Data validation
+- **Celery** - Task queue
+- **Redis** - Cache & message broker
+
+### AI & ML
+
+- **OpenAI GPT** - AI translation
+- **EasyOCR** - Text recognition
+- **Deep Translator** - Free translation
+- **spaCy** - NLP (optional)
+
+### Image Processing
+
+- **OpenCV** - Image manipulation
+- **Pillow** - Image processing
+- **NumPy** - Numerical operations
+
+### Web Scraping
+
+- **BeautifulSoup4** - HTML parsing
+- **Selenium** - Dynamic content
+- **httpx** - HTTP client
+
+---
+
+## 📊 API Endpoints
+
+### Authentication
+
+- `POST /api/v1/auth/register` - Kullanıcı kaydı
+- `POST /api/v1/auth/login` - Giriş
+- `GET /api/v1/auth/me` - Profil bilgisi
+
+### Translation
+
+- `POST /api/v1/translate/start` - Çeviri başlat
+- `GET /api/v1/translate/status/{task_id}` - Durum sorgula
+- `GET /api/v1/translate/result/{task_id}` - Sonuç al
+
+### Series
+
+- `GET /api/v1/public/series` - Serileri listele
+- `GET /api/v1/series/{id}` - Seri detayı
+- `POST /api/v1/series` - Seri oluştur
+- `PUT /api/v1/series/{id}` - Seri güncelle
+
+### Discovery
+
+- `GET /api/v1/series/trending` - Trend seriler
+- `GET /api/v1/series/featured` - Öne çıkanlar
+- `GET /api/v1/series/popular` - Popüler seriler
+
+**Tüm endpoint'ler için:** http://localhost:8000/docs
+
+---
+
+## 🧪 Testing
+
+```bash
+# Tüm testleri çalıştır
+RUN_TESTS.bat
+
+# Endpoint testleri
+python test_all_endpoints.py
+
+# Manuel test
+pytest tests/
+```
+
+---
+
+## 🐛 Sorun Giderme
+
+### Python Bulunamadı
+
+```bash
+# Python'u PATH'e ekleyin veya yeniden kurun
+python --version
+```
+
+### Docker Bağlantı Hatası
+
+```bash
+# Docker Desktop'ı açın ve Redis'i başlatın
+docker start webtoon_redis
+```
+
+### Port Zaten Kullanımda
+
+```bash
+# Portu kullanan işlemi bulun ve sonlandırın
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
+```
+
+**Detaylı sorun giderme:** [KURULUM_DOKUMANI.md](KURULUM_DOKUMANI.md#sorun-giderme)
+
+---
+
+## 📝 Lisans
+
+MIT License - Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+
+---
+
+## 🤝 Katkıda Bulunma
+
+1. Fork edin
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Commit edin (`git commit -m 'Add amazing feature'`)
+4. Push edin (`git push origin feature/amazing-feature`)
+5. Pull Request açın
+
+---
+
+## 📞 İletişim
+
+- **Proje:** https://github.com/KULLANICI_ADI/Webtoon
+- **Issues:** https://github.com/KULLANICI_ADI/Webtoon/issues
+- **Dokümantasyon:** http://localhost:8000/docs
+
+---
+
+## 🙏 Teşekkürler
+
+Bu proje aşağıdaki harika açık kaynak projelerini kullanmaktadır:
+
+- FastAPI
+- SQLAlchemy
+- OpenAI
+- EasyOCR
+- Celery
+- Redis
+- Docker
+
+---
+
+<div align="center">
+
+**⭐ Projeyi beğendiyseniz yıldız vermeyi unutmayın!**
+
+Made with ❤️ by Webtoon AI Translator Team
+
+</div>

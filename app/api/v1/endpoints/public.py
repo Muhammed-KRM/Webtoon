@@ -24,7 +24,7 @@ def list_series_public(
     search: Optional[str] = None,
     genre: Optional[str] = None,
     status: Optional[str] = None,
-    sort: str = Query("newest", regex="^(newest|popular|rating)$"),
+    sort: str = Query("newest", pattern="^(newest|popular|rating)$"),
     db: Session = Depends(get_db)
 ):
     """List all series (public, no auth required)"""
