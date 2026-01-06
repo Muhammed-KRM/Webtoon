@@ -4,7 +4,7 @@ Priority: Hugging Face > Argos Translate > Google Translate > DeepL
 """
 from typing import List, Optional
 from loguru import logger
-from deep_translator import GoogleTranslator, DeepL
+from deep_translator import GoogleTranslator, DeeplTranslator
 from app.services.language_detector import LanguageDetector
 
 # Try to import alternative translators
@@ -72,7 +72,7 @@ class FreeTranslator:
             try:
                 # DeepL free tier requires API key, but we can try without
                 # If no API key, fallback to Google
-                self._deepl_translator = DeepL(source=source, target=target, use_free_api=True)
+                self._deepl_translator = DeeplTranslator(source=source, target=target, use_free_api=True)
             except Exception as e:
                 logger.warning(f"Failed to initialize DeepL Translator: {e}")
                 return None

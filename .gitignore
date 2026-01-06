@@ -75,3 +75,6 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
+ 
+*.exe 
+DockerInstaller.exe 

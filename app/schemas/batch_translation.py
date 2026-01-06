@@ -2,7 +2,7 @@
 Batch Translation Schemas
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from app.core.enums import TranslateType
 
 

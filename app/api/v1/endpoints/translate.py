@@ -45,6 +45,40 @@ def start_translation(
     """Start a translation job"""
     start_time = time.time()
     try:
+        # Check for duplicate translation (lock mechanism)
+        from app.services.cache_service import CacheService
+        cache_service = CacheService()
+        
+        # Check if translation is already in progress
+        if cache_service.is_translation_locked(
+            request.chapter_url,
+            request.target_lang,
+            request.translate_type
+        ):
+            # Check if there's a pending job in database
+            existing_job = db.query(TranslationJob).filter(
+                TranslationJob.chapter_url == request.chapter_url,
+                TranslationJob.target_lang == request.target_lang,
+                TranslationJob.status.in_(["PENDING", "PROCESSING"])
+            ).first()
+            
+            if existing_job:
+                return BaseResponse.success_response(
+                    {"task_id": existing_job.task_id},
+                    "Translation already in progress. Use the existing task ID to track it."
+                )
+        
+        # Acquire lock
+        if not cache_service.acquire_translation_lock(
+            request.chapter_url,
+            request.target_lang,
+            request.translate_type
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Translation already in progress for this chapter. Please wait for it to complete."
+            )
+        
         # Generate task ID
         task_id = str(uuid.uuid4())
         
@@ -54,6 +88,12 @@ def start_translation(
         
         # Validate translate_type
         if request.translate_type not in [TranslateType.AI, TranslateType.FREE]:
+            # Release lock on validation error
+            cache_service.release_translation_lock(
+                request.chapter_url,
+                request.target_lang,
+                request.translate_type
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"translate_type must be {TranslateType.AI} (AI) or {TranslateType.FREE} (Free)"

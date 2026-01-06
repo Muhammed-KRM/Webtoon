@@ -50,6 +50,25 @@ class Settings(BaseSettings):
     DEFAULT_FONT_SIZE: int = 20
     MIN_FONT_SIZE: int = 10
     MAX_FONT_SIZE: int = 40
+    USE_WEBP: bool = True  # Use WebP format for better compression
+    IMAGE_QUALITY: int = 90  # WebP/JPEG quality (0-100)
+    
+    # CDN Settings (S3/MinIO)
+    CDN_ENABLED: bool = False  # Enable CDN for image storage
+    CDN_TYPE: str = "s3"  # "s3" or "minio"
+    
+    # AWS S3 Settings
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: str = ""
+    
+    # MinIO Settings
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = ""
+    MINIO_SECRET_KEY: str = ""
+    MINIO_SECURE: bool = False
+    MINIO_BUCKET_NAME: str = "webtoon-images"
     
     class Config:
         env_file = ".env"

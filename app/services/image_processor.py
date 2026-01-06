@@ -6,10 +6,15 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import io
 import textwrap
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Optional
 from pathlib import Path
 from loguru import logger
 from app.core.config import settings
+
+# Thread pool for CPU-intensive operations (prevents event loop blocking)
+_image_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="image_processor")
 
 
 class ImageProcessor:
@@ -104,25 +109,38 @@ class ImageProcessor:
         return best_size, best_font
     
     def _wrap_text(self, text: str, max_width: int, font: ImageFont.FreeTypeFont) -> List[str]:
-        """Wrap text to fit within max_width"""
-        words = text.split()
+        """
+        Wrap text to fit within max_width with accurate width calculation
+        
+        Uses textwrap for better handling of long words and proper wrapping
+        """
+        # Use textwrap for better word breaking
+        wrapped = textwrap.wrap(
+            text,
+            width=max_width // (font.size if hasattr(font, 'size') else 10) if max_width > 0 else 50,
+            break_long_words=True,
+            break_on_hyphens=True
+        )
+        
+        # Verify each line fits (with accurate measurement)
         lines = []
-        current_line = []
-        
-        for word in words:
-            test_line = ' '.join(current_line + [word])
-            # Estimate width (approximate)
-            width = len(test_line) * (font.size if hasattr(font, 'size') else 10)
-            
-            if width <= max_width:
-                current_line.append(word)
+        for line in wrapped:
+            # Get accurate width using font metrics
+            if hasattr(font, 'getsize'):
+                line_width = font.getsize(line)[0]
             else:
-                if current_line:
-                    lines.append(' '.join(current_line))
-                current_line = [word]
-        
-        if current_line:
-            lines.append(' '.join(current_line))
+                # Fallback: approximate (0.6 is average character width ratio)
+                line_width = len(line) * (font.size if hasattr(font, 'size') else 10) * 0.6
+            
+            if line_width <= max_width or not lines:  # Always add at least one line
+                lines.append(line)
+            else:
+                # Line too wide, need to break further
+                # Split by characters if needed
+                chars_per_line = int(max_width / (font.size if hasattr(font, 'size') else 10) * 1.6)
+                if chars_per_line > 0:
+                    for i in range(0, len(line), chars_per_line):
+                        lines.append(line[i:i+chars_per_line])
         
         return lines if lines else [text]
     
@@ -135,22 +153,38 @@ class ImageProcessor:
                 return False
         return True
     
-    def process_image(
+    async def process_image_async(
         self,
         image_bytes: bytes,
         text_blocks: List[Dict],
         translated_texts: List[str]
     ) -> bytes:
         """
-        Process image: remove original text and add translated text
+        Async wrapper for process_image (prevents event loop blocking)
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            _image_executor,
+            self.process_image,
+            image_bytes,
+            text_blocks,
+            translated_texts
+        )
+    
+    def clean_image(
+        self,
+        image_bytes: bytes,
+        text_blocks: List[Dict]
+    ) -> bytes:
+        """
+        Remove text from image (In-painting only)
         
         Args:
-            image_bytes: Original image as bytes
-            text_blocks: List of text blocks with coordinates
-            translated_texts: List of translated texts
+            image_bytes: Original image bytes
+            text_blocks: Text blocks to remove
             
         Returns:
-            Processed image as bytes
+            Cleaned image bytes (WebP/JPEG)
         """
         try:
             # 1. Convert bytes to OpenCV image
@@ -177,11 +211,49 @@ class ImageProcessor:
             # 3. In-paint to remove text
             clean_img = cv2.inpaint(img, mask, 3, cv2.INPAINT_TELEA)
             
-            # 4. Convert to PIL for text rendering
+            # 4. Convert to bytes
+            # Convert BGR (OpenCV) to RGB (PIL) for consistent encoding
             img_pil = Image.fromarray(cv2.cvtColor(clean_img, cv2.COLOR_BGR2RGB))
+            
+            return self._encode_image(img_pil)
+            
+        except Exception as e:
+            logger.error(f"Error cleaning image: {e}")
+            raise
+
+    def render_text(
+        self,
+        background_image_bytes: bytes,
+        text_blocks: List[Dict],
+        translated_texts: List[str]
+    ) -> bytes:
+        """
+        Render text onto a background image (no in-painting)
+        
+        Args:
+            background_image_bytes: Cleaned image bytes (or original for overlay)
+            text_blocks: Text blocks with coordinates
+            translated_texts: Texts to render
+            
+        Returns:
+            Final image bytes
+        """
+        try:
+            # 1. Load background image
+            # Try loading as PIL image directly first
+            try:
+                img_pil = Image.open(io.BytesIO(background_image_bytes)).convert("RGB")
+            except:
+                # Fallback to OpenCV verify
+                nparr = np.frombuffer(background_image_bytes, np.uint8)
+                img_cv = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                if img_cv is None:
+                    raise ValueError("Could not decode background image")
+                img_pil = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+            
             draw = ImageDraw.Draw(img_pil)
             
-            # 5. Render translated text
+            # 2. Render translated text
             for i, block in enumerate(text_blocks):
                 if i >= len(translated_texts):
                     continue
@@ -233,12 +305,45 @@ class ImageProcessor:
                         font=font
                     )
             
-            # 6. Convert back to bytes
-            buf = io.BytesIO()
-            img_pil.save(buf, format='JPEG', quality=95)
-            return buf.getvalue()
+            # 3. Return encoded bytes
+            return self._encode_image(img_pil)
             
         except Exception as e:
-            logger.error(f"Error processing image: {e}")
+            logger.error(f"Error rendering text: {e}")
             raise
+
+    def process_image(
+        self,
+        image_bytes: bytes,
+        text_blocks: List[Dict],
+        translated_texts: List[str]
+    ) -> bytes:
+        """
+        Process image: remove original text and add translated text
+        Wrapper that combines clean_image and render_text
+        """
+        # 1. Clean image
+        cleaned_bytes = self.clean_image(image_bytes, text_blocks)
+        
+        # 2. Render text
+        return self.render_text(cleaned_bytes, text_blocks, translated_texts)
+
+    def _encode_image(self, img_pil: Image.Image) -> bytes:
+        """Helper to encode PIL image to bytes (WebP/JPEG)"""
+        buf = io.BytesIO()
+        if settings.USE_WEBP:
+            try:
+                img_pil.save(
+                    buf,
+                    format='WEBP',
+                    quality=settings.IMAGE_QUALITY,
+                    method=6
+                )
+            except Exception as e:
+                logger.warning(f"WebP encode failed, fallback to JPEG: {e}")
+                buf = io.BytesIO()
+                img_pil.save(buf, format='JPEG', quality=settings.IMAGE_QUALITY)
+        else:
+            img_pil.save(buf, format='JPEG', quality=settings.IMAGE_QUALITY)
+        return buf.getvalue()
 

@@ -1,6 +1,6 @@
 """
 Alternative Translation Services - Free/cheaper AI translation options
-Supports: Argos Translate (offline), Hugging Face models, EzAITranslate API
+Supports: Argos Translate (offline), Hugging Face models
 """
 from typing import List, Optional
 from loguru import logger
@@ -92,8 +92,6 @@ class AlternativeTranslator:
             return self._translate_with_argos(texts, source_lang, target_lang)
         elif provider == "huggingface" and TRANSFORMERS_AVAILABLE:
             return self._translate_with_huggingface(texts, source_lang, target_lang)
-        elif provider == "ezai":
-            return self._translate_with_ezai(texts, source_lang, target_lang)
         else:
             logger.warning(f"Provider {provider} not available, returning original texts")
             return texts
@@ -148,13 +146,6 @@ class AlternativeTranslator:
         except Exception as e:
             logger.error(f"Hugging Face batch error: {e}")
             return texts
-    
-    def _translate_with_ezai(self, texts: List[str], source_lang: str, target_lang: str) -> List[str]:
-        """Translate using EzAITranslate API (free, requires API key)"""
-        # Note: This is a placeholder. EzAITranslate API documentation needed
-        # For now, return original texts
-        logger.warning("EzAITranslate API not yet implemented. API documentation needed.")
-        return texts
     
     def translate_single(
         self,

@@ -1,52 +1,45 @@
 @echo off
-echo ========================================
-echo GitHub'a Yükleme Script
-echo ========================================
+echo ===========================================
+echo Webtoon AI Translator - Guvenli GitHub Push
+echo ===========================================
 echo.
 
-echo [1/5] Git durumu kontrol ediliyor...
-if not exist .git (
-    echo Git repo bulunamadi, olusturuluyor...
-    git init
-    git config user.name "Muhammed-KRM"
-    git config user.email "ustunmuhammed09@gmail.com"
-    echo Git repo olusturuldu.
+echo [1/4] Git ayarlari optimize ediliyor (Timeout onlemi)...
+:: Buffer boyutunu 500MB'a cikart
+git config http.postBuffer 524288000
+:: Hiz limitini kaldir
+git config http.lowSpeedLimit 0
+git config http.lowSpeedTime 999999
+:: HTTP surumunu 1.1'e zorla (bazi proxy sorunlarini cozer)
+git config http.version HTTP/1.1
+
+echo.
+echo [2/4] Desigiklikler ekleniyor...
+git add .
+
+echo.
+echo [3/4] Commit olusturuluyor...
+set /p commit_msg="Commit mesaji girin (Enter'a basarsaniz 'Auto update' olur): "
+if "%commit_msg%"=="" set commit_msg=Auto update with fixes
+git commit -m "%commit_msg%"
+
+echo.
+echo [4/4] GitHub'a gonderiliyor (Push)...
+echo Lutfen bekleyin, bu islem internet hiziniza gore surebilir...
+git push origin main
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [HATA] Push islemi basarisiz oldu!
+    echo Olasiliklar:
+    echo 1. Internet baglantinizda kopma oldu.
+    echo 2. Dosyalar cok buyuk.
+    echo 3. GitHub sunuculari yogun.
+    echo.
+    echo "git push" komutunu tekrar deneyin.
 ) else (
-    echo Git repo mevcut.
+    echo.
+    echo [BASARILI] Kodlar GitHub'a gonderildi.
 )
 echo.
-
-echo [2/5] Dosyalar ekleniyor...
-git add .
-echo Dosyalar eklendi.
-echo.
-
-echo [3/5] Commit olusturuluyor...
-git commit -m "Initial commit: Webtoon AI Translator - Complete backend with all features"
-echo Commit olusturuldu.
-echo.
-
-echo [4/5] Remote yapilandiriliyor...
-git remote remove origin 2>nul
-git remote add origin https://github.com/Muhammed-KRM/webtoon-ai-translator.git
-git branch -M main
-echo Remote yapilandirildi.
-echo.
-
-echo [5/5] GitHub'a push ediliyor...
-echo.
-echo NOT: Eger repo henuz olusturulmadiysa, once GitHub'da olustur:
-echo 1. https://github.com/Muhammed-KRM adresine git
-echo 2. "New repository" butonuna tikla
-echo 3. Name: webtoon-ai-translator
-echo 4. Public sec ve olustur
-echo.
-echo Push ediliyor...
-git push -u origin main
-echo.
-echo ========================================
-echo Tamamlandi!
-echo Repository: https://github.com/Muhammed-KRM/webtoon-ai-translator
-echo ========================================
 pause
-

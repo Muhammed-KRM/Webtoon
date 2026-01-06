@@ -5,10 +5,13 @@
 ### Hızlı Başlangıç
 
 1. **İlk Kurulum:**
+
    ```bash
    SETUP.bat
    ```
+
    Bu komut:
+
    - ✅ Python virtual environment oluşturur
    - ✅ Tüm temel paketleri kurar
    - ✅ Opsiyonel paketleri kurar (Hugging Face, Argos, spaCy)
@@ -17,9 +20,11 @@
    - ✅ .env dosyasını hazırlar
 
 2. **Sadece Opsiyonel Paketler:**
+
    ```bash
    INSTALL_OPTIONAL.bat
    ```
+
    Eğer temel kurulum yapıldıysa ve sadece opsiyonel paketleri eklemek istiyorsanız.
 
 3. **Projeyi Başlatma:**
@@ -35,6 +40,7 @@
 ### Kurulacak Paketler
 
 #### Zorunlu Paketler
+
 - **FastAPI**: Web framework
 - **Celery**: Task queue
 - **Redis**: Cache ve message broker
@@ -45,14 +51,13 @@
 - **httpx + BeautifulSoup**: Web scraping
 
 #### Opsiyonel Paketler (Otomatik Kurulur)
+
 - **Hugging Face Transformers** (`transformers==4.36.2` + `torch==2.1.2`)
   - Offline AI çevirisi için
   - ~2GB disk alanı (ilk kullanımda model indirilir)
-  
 - **Argos Translate** (`argostranslate==1.9.0`)
   - Offline ücretsiz çeviri için
   - ~200-500MB disk alanı (dil çiftine göre)
-  
 - **spaCy** (`spacy==3.7.2` + `en_core_web_sm` model)
   - Gelişmiş özel isim tespiti (NER) için
   - ~50-100MB disk alanı
@@ -75,6 +80,23 @@ DATABASE_URL=postgresql://user:pass@localhost/webtoon_db
 # DATABASE_URL=sqlite:///./webtoon.db
 OPENAI_API_KEY=sk-your-openai-api-key-here
 REDIS_URL=redis://localhost:6379/0
+
+# CDN Settings (Opsiyonel)
+CDN_ENABLED=false
+CDN_TYPE=s3  # or "minio"
+
+# AWS S3 (CDN_TYPE=s3 için)
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=
+
+# MinIO (CDN_TYPE=minio için)
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=
+MINIO_SECRET_KEY=
+MINIO_SECURE=false
+MINIO_BUCKET_NAME=webtoon-images
 ```
 
 Detaylı rehber: `DOC/API_KEY_REHBERI.md`
@@ -84,12 +106,14 @@ Detaylı rehber: `DOC/API_KEY_REHBERI.md`
 Sistem otomatik olarak en iyi çeviri servisini seçer:
 
 **Çeviri Servisleri (Öncelik Sırası):**
+
 1. **Hugging Face** (varsa) → Offline, ücretsiz, kaliteli
 2. **Argos Translate** (varsa) → Offline, ücretsiz, hızlı
 3. **Google Translate** (her zaman) → Online, ücretsiz
 4. **DeepL** (varsa) → Online, API key gerekebilir
 
 **NER Servisleri (Öncelik Sırası):**
+
 1. **spaCy** (varsa) → %85-95 doğruluk
 2. **Regex** (her zaman) → %60-70 doğruluk
 
@@ -107,6 +131,7 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
 **Webtoon AI Translator**, webtoon serilerini otomatik olarak çeviren profesyonel bir makine çeviri platformudur. Uygulama, görüntü işleme (Computer Vision), doğal dil işleme (NLP) ve asenkron iş akışları kullanarak webtoon görsellerindeki metinleri algılar, çevirir ve orijinal görsel üzerine yerleştirir.
 
 ### Ana Hedefler:
+
 1. **Otomatik Çeviri:** Webtoon bölümlerini otomatik olarak çevirme
 2. **Çoklu Site Desteği:** Farklı webtoon sitelerinden içerik çekme
 3. **Çoklu Dil Desteği:** 30+ dilde çeviri yapabilme
@@ -115,6 +140,7 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
 6. **Topluluk Özellikleri:** Yorum, tepki, favori gibi sosyal özellikler
 
 ### İki Ayrı Site İçin:
+
 - **Çeviri Sitesi:** Diğer kullanıcılara makine çeviri hizmeti sunma
 - **Okuma Sitesi:** Çevrilmiş webtoon serilerini okuma platformu
 
@@ -123,86 +149,115 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
 ## 🛠️ **KULLANILAN TEKNOLOJİLER VE KULLANIM YERLERİ**
 
 ### Backend Framework
+
 **FastAPI**
+
 - **Nerede:** `main.py`, tüm API endpoint'leri
 - **Neden:** Asenkron, hızlı, modern Python framework
 - **Kullanım:** RESTful API, request/response handling, middleware
 
 ### Task Queue
+
 **Celery + Redis**
+
 - **Nerede:** `app/operations/translation_manager.py`, `app/celery_app.py`
 - **Neden:** Uzun süren çeviri işlemlerini arka planda çalıştırmak
 - **Kullanım:** OCR, çeviri, görüntü işleme işlemleri
 
 ### Database
+
 **SQLAlchemy (ORM) + PostgreSQL/SQLite**
+
 - **Nerede:** `app/db/`, `app/models/`
 - **Neden:** Veritabanı yönetimi, ORM ile kolay veri erişimi
 - **Kullanım:** Tüm veri modelleri, ilişkiler, sorgular
 
 ### Caching
+
 **Redis**
+
 - **Nerede:** `app/services/cache_service.py`, `app/services/api_cache.py`
 - **Neden:** Hızlı veri erişimi, performans optimizasyonu
-- **Kullanım:** 
+- **Kullanım:**
   - API response caching
   - Translation result caching
   - Rate limiting
   - Metrics storage
 
 ### OCR Engine
+
 **EasyOCR**
+
 - **Nerede:** `app/services/ocr_service.py`
 - **Neden:** Görüntülerden metin algılama
 - **Kullanım:** Webtoon sayfalarındaki metinleri tespit etme
+- **Event Loop Protection:** `run_in_executor` ile thread pool'da çalışır
+- **GPU Support:** Config'den GPU kullanımı açılıp kapatılabilir
 
 ### Translation Engine
+
 **OpenAI GPT-4o-mini**
+
 - **Nerede:** `app/services/ai_translator.py`
 - **Neden:** Context-aware, tutarlı çeviri
 - **Kullanım:** Metin çevirisi, karakter isim tutarlılığı
 
 ### Image Processing
+
 **OpenCV + Pillow**
+
 - **Nerede:** `app/services/image_processor.py`
 - **Neden:** Görüntü işleme, metin yerleştirme
-- **Kullanım:** 
+- **Kullanım:**
   - In-painting (metin silme)
   - Metin yerleştirme
   - Font boyutlandırma
+  - Text wrapping (textwrap)
+  - WebP format support
+- **Event Loop Protection:** `run_in_executor` ile thread pool'da çalışır
 
 ### Authentication
+
 **JWT (OAuth2)**
+
 - **Nerede:** `app/core/security.py`
 - **Neden:** Güvenli kullanıcı kimlik doğrulama
 - **Kullanım:** Token tabanlı authentication, role-based access
 
 ### Web Scraping
+
 **httpx + BeautifulSoup + Selenium**
+
 - **Nerede:** `app/services/scraper_service.py`, `app/services/scrapers/`
 - **Neden:** Webtoon sitelerinden içerik çekme
-- **Kullanım:** 
+- **Kullanım:**
   - Webtoons.com scraping
   - AsuraScans scraping
   - Dinamik içerik yükleme
 
 ### Payment Gateway
+
 **Stripe**
+
 - **Nerede:** `app/services/payment_service.py`, `app/api/v1/endpoints/payments.py`
 - **Neden:** Premium ödemeleri işleme
 - **Kullanım:** Payment intent, webhook handling
 
 ### Logging
+
 **Loguru + Database Logging**
+
 - **Nerede:** `app/services/db_logger.py`, `app/core/middleware.py`
 - **Neden:** Hata takibi, performans izleme
 - **Kullanım:** Request/response logging, error tracking
 
 ### Enum System
+
 **Python Enum (IntEnum, Enum)**
+
 - **Nerede:** `app/core/enums.py`, `app/core/tag_enum.py`
 - **Neden:** Tip güvenliği, tutarlılık, hata önleme
-- **Kullanım:** 
+- **Kullanım:**
   - `TranslateType`: AI (1) veya FREE (2) çeviri seçimi
   - `TranslationMode`: CLEAN (1) veya OVERLAY (2) işleme modu
   - `JobStatus`: PENDING, PROCESSING, COMPLETED, FAILED
@@ -219,7 +274,9 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
   - `WebtoonTag`: 200+ webtoon tag'i (action, comedy, system, return, vb.)
 
 ### Tag & Category System
+
 **Tag Enum + Database Models**
+
 - **Nerede:** `app/core/tag_enum.py`, `app/models/tag.py`, `app/services/series_manager.py`
 - **Neden:** Serilere tag ve kategori ekleme, filtreleme, arama
 - **Kullanım:**
@@ -230,7 +287,9 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
   - Otomatik tag oluşturma: Var olmayan tag'ler otomatik oluşturulur
 
 ### Series Management System
+
 **SeriesManager Service**
+
 - **Nerede:** `app/services/series_manager.py`, `app/operations/translation_publisher.py`
 - **Neden:** Seri bulma/oluşturma, chapter çakışma çözümü, transaction yönetimi
 - **Kullanım:**
@@ -241,37 +300,49 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
   - Transaction rollback: Hata durumunda otomatik rollback ve dosya temizleme
 
 ### Database Migrations
+
 **Alembic**
+
 - **Nerede:** `alembic/`, `alembic.ini`
 - **Neden:** Veritabanı şema yönetimi
 - **Kullanım:** Schema değişiklikleri, version control
 
 ### Validation
+
 **Pydantic**
+
 - **Nerede:** `app/schemas/`
 - **Neden:** Request/response validation
 - **Kullanım:** Tüm API endpoint'lerinde data validation
 
 ### Compression
+
 **Gzip Middleware**
+
 - **Nerede:** `app/core/compression.py`
 - **Neden:** Response boyutunu küçültme
 - **Kullanım:** Tüm API response'larında otomatik compression
 
 ### Rate Limiting
+
 **slowapi + Redis**
+
 - **Nerede:** `app/core/rate_limit.py`
 - **Neden:** API abuse önleme
 - **Kullanım:** Endpoint rate limiting
 
 ### Metrics
+
 **Custom Metrics Collector**
+
 - **Nerede:** `app/core/metrics.py`
 - **Neden:** Performans izleme
 - **Kullanım:** Request counters, timing, error rates
 
 ### Retry & Circuit Breaker
+
 **Custom Implementation**
+
 - **Nerede:** `app/core/retry.py`, `app/core/circuit_breaker.py`
 - **Neden:** Hata toleransı, sistem stabilitesi
 - **Kullanım:** External API çağrılarında retry logic
@@ -319,7 +390,8 @@ webtoon-ai-translator/
 │   │           ├── public.py           # Public (no auth) endpoints
 │   │           ├── discovery.py        # Discovery endpoints (trending, featured, recommendations)
 │   │           ├── cache.py            # Cache management endpoints
-│   │           └── logs.py             # Log viewing endpoints
+│   │           ├── logs.py             # Log viewing endpoints
+│   │           └── translation_editor.py # Human-in-the-Loop editor endpoints
 │   │
 │   ├── 📁 core/                        # Çekirdek modüller (14 dosya)
 │   │   ├── config.py                    # Uygulama ayarları
@@ -404,6 +476,7 @@ webtoon-ai-translator/
 │   │   ├── site_settings.py             # SiteSettings model
 │   │   ├── reading.py                   # ReadingHistory, Bookmark, Rating, Notification
 │   │   ├── log.py                       # Log model
+│   │   ├── scraper_config.py           # ScraperConfig model (dynamic CSS selectors)
 │   │   └── __init__.py                  # Model exports
 │   │
 │   ├── 📁 schemas/                     # Pydantic schemas (9 dosya)
@@ -471,33 +544,52 @@ webtoon-ai-translator/
 │   │   │                                 # - Reader container detection
 │   │   │                                 # - Image URL extraction
 │   │   │
+│   │   ├── scraper_config_service.py   # Dynamic scraper configuration
+│   │   │                                 # - CSS selector management
+│   │   │                                 # - Database-based config
+│   │   │                                 # - Default selector fallback
+│   │   │                                 # - Admin config updates
+│   │   │
 │   │   ├── ocr_service.py               # OCR (EasyOCR)
 │   │   │                                 # - EasyOCR reader initialization
 │   │   │                                 # - Text detection
 │   │   │                                 # - Bounding box extraction
 │   │   │                                 # - GPU support (optional)
+│   │   │                                 # - Async wrapper (run_in_executor)
+│   │   │                                 # - Event loop blocking prevention
 │   │   │
 │   │   ├── ai_translator.py             # OpenAI translation
 │   │   │                                 # - GPT-4o-mini integration
 │   │   │                                 # - Context-aware translation
 │   │   │                                 # - Cached Input support
 │   │   │                                 # - Batch translation
+│   │   │                                 # - Glossary system integration
+│   │   │                                 # - Smart chunking (token limit management)
 │   │   │
 │   │   ├── image_processor.py           # Image processing (OpenCV, Pillow)
 │   │   │                                 # - In-painting (text removal)
 │   │   │                                 # - Text rendering
 │   │   │                                 # - Dynamic font sizing
 │   │   │                                 # - Multi-line text support
+│   │   │                                 # - Text wrapping (textwrap)
+│   │   │                                 # - WebP format support (~50% smaller)
+│   │   │                                 # - Async wrapper (run_in_executor)
+│   │   │                                 # - Event loop blocking prevention
 │   │   │
 │   │   ├── file_manager.py              # File organization
 │   │   │                                 # - Folder structure creation
 │   │   │                                 # - Chapter/page naming
 │   │   │                                 # - Metadata saving
+│   │   │                                 # - CDN integration (S3/MinIO)
+│   │   │                                 # - Automatic CDN upload
+│   │   │                                 # - Local fallback
 │   │   │
 │   │   ├── cache_service.py             # Redis caching
 │   │   │                                 # - Translation result caching
 │   │   │                                 # - Cache key generation
 │   │   │                                 # - TTL management
+│   │   │                                 # - Translation lock mechanism
+│   │   │                                 # - Duplicate prevention
 │   │   │
 │   │   ├── api_cache.py                 # API response caching
 │   │   │                                 # - Endpoint response caching
@@ -569,6 +661,9 @@ webtoon-ai-translator/
 │           └── chapter_{number:04d}/
 │               ├── page_001.jpg
 │               ├── page_002.jpg
+│               ├── cleaned/            # Temizlenmiş (yazısız) resimler (Editör için)
+│               │   ├── page_001.jpg
+│               │   └── ...
 │               └── metadata.json
 │
 ├── 📁 cache/                           # Cache dosyaları (gitignore)
@@ -642,6 +737,7 @@ webtoon-ai-translator/
 ## ⚡ **KISA ÖZELLİK ÖZETİ**
 
 ### ✅ **Tag & Category Sistemi**
+
 - **200+ Webtoon Tag**: Genre tags (action, comedy, drama, vb.), webtoon-specific tags (system, return, rebirth, vb.), character tags, relationship tags
 - **Tag Enum**: `WebtoonTag` enum ile tüm tag'ler validate edilir
 - **Category System**: Ana kategori sistemi (Action, Romance, vb.)
@@ -649,6 +745,7 @@ webtoon-ai-translator/
 - **Many-to-Many Relationship**: Seriler birden fazla tag'e sahip olabilir
 
 ### ✅ **Seri Yönetimi ve Çakışma Çözümü**
+
 - **Akıllı Seri Bulma**: Aynı isimde seri varsa yeni oluşturmaz, mevcut seriyi kullanır
 - **Chapter Çakışma Yönetimi**: Aynı chapter number varsa yenisiyle değiştirilebilir veya korunabilir
 - **Translation Çakışma Yönetimi**: Aynı dil çifti varsa eski translation dosyaları silinir, yenisiyle değiştirilir
@@ -657,6 +754,7 @@ webtoon-ai-translator/
 - **Veri Bütünlüğü**: Veri kaybı önleme mekanizmaları
 
 ### ✅ **Discovery Özellikleri**
+
 - **Trending Series**: Günlük/haftalık/aylık trending seriler
 - **Featured Series**: Admin seçili öne çıkan seriler
 - **Recommendations**: Kullanıcıya özel öneriler (okuma geçmişi, bookmark'lar, benzer türler)
@@ -665,6 +763,7 @@ webtoon-ai-translator/
 - **Genre List**: Mevcut türler ve sayıları
 
 ### ✅ **Admin Content Management**
+
 - **Manuel Chapter Upload**: Admin'ler çeviri yaptırmadan direkt bölüm yükleyebilir
 - **Page Editing**: Spesifik sayfa düzenleme/yeniden yükleme
 - **Page Deletion**: Spesifik sayfa silme
@@ -672,13 +771,19 @@ webtoon-ai-translator/
 - **Bulk Publish**: Toplu bölüm yayınlama/yayından kaldırma
 
 ### ✅ **Çeviri Özellikleri**
+
 - ✅ Multi-site scraping (Webtoons.com, AsuraScans)
 - ✅ Multi-language translation (30+ dil)
 - ✅ Context-aware translation (tutarlı karakter isimleri)
 - ✅ Batch translation (bölüm aralığı)
 - ✅ Automatic translation publishing
+- ✅ **Glossary System**: Seri bazlı sözlük (tutarlı çeviri)
+- ✅ **Smart Chunking**: Token limiti yönetimi (büyük bölümler için)
+- ✅ **Human-in-the-Loop Editor**: Manuel çeviri düzenleme
+- ✅ **Event Loop Protection**: CPU-intensive işlemler thread pool'da
 
 ### ✅ **Okuma Platformu Özellikleri**
+
 - ✅ Series management (seri yönetimi)
 - ✅ Chapter management (bölüm yönetimi)
 - ✅ Multi-language reading (çoklu dil okuma)
@@ -686,19 +791,30 @@ webtoon-ai-translator/
 - ✅ Bookmarks (favoriler)
 - ✅ Ratings (puanlar)
 
+### ✅ **Infrastructure & Performance**
+
+- ✅ **CDN Integration**: S3/MinIO desteği (disk tasarrufu, hız)
+- ✅ **Dinamik Scraper Config**: CSS selector'lar DB'den yönetilir
+- ✅ **Event Loop Protection**: CPU-intensive işlemler thread pool'da
+- ✅ **WebP Format**: %50 daha küçük dosya boyutu
+- ✅ **Cache/Lock Mechanism**: Duplicate translation prevention
+
 ### ✅ **Sosyal Özellikler**
+
 - ✅ Comment system (yorum sistemi)
 - ✅ Reply system (cevap sistemi)
 - ✅ Like system (beğeni sistemi)
 - ✅ Reaction system (emoji, gif, memoji tepkileri)
 
 ### ✅ **Premium & Payment**
+
 - ✅ Subscription system (abonelik sistemi)
 - ✅ Stripe payment integration
 - ✅ Monthly chapter limits
 - ✅ Extra chapter purchases
 
 ### ✅ **Performans & Optimizasyon**
+
 - ✅ Redis caching (API responses, translations)
 - ✅ Response compression (Gzip)
 - ✅ Query optimization (eager loading)
@@ -708,6 +824,7 @@ webtoon-ai-translator/
 - ✅ **Otomatik fallback:** En iyi çeviri servisini otomatik seçme
 
 ### ✅ **Güvenlik & Monitoring**
+
 - ✅ JWT authentication
 - ✅ Role-based access control
 - ✅ Rate limiting
@@ -720,6 +837,7 @@ webtoon-ai-translator/
 ## 📋 **TÜM ENDPOINT'LER VE AÇIKLAMALARI**
 
 > **Not:** Tüm endpoint'ler `BaseResponse<T>` formatında response döner:
+>
 > ```json
 > {
 >   "success": true,
@@ -727,14 +845,16 @@ webtoon-ai-translator/
 >   "data": { ... }
 > }
 > ```
-> 
+>
 > **Cache Notu:** Public ve read-heavy endpoint'ler Redis ile cache'lenir (TTL: 3-5 dakika). Write işlemlerinde otomatik cache invalidation yapılır.
 
 ### 🔐 **Authentication Endpoints** (`/api/v1/auth`)
 
 #### `POST /api/v1/auth/register`
+
 **Amaç:** Yeni kullanıcı kaydı
 **Request:**
+
 ```json
 {
   "username": "string",
@@ -742,22 +862,27 @@ webtoon-ai-translator/
   "password": "string"
 }
 ```
+
 **Response:** JWT access token
 **Kullanım:** Kullanıcı kayıt işlemi
 
 #### `POST /api/v1/auth/login`
+
 **Amaç:** Kullanıcı girişi
 **Request:**
+
 ```json
 {
   "username": "string",
   "password": "string"
 }
 ```
+
 **Response:** JWT access token
 **Kullanım:** Kullanıcı giriş işlemi
 
 #### `GET /api/v1/auth/me`
+
 **Amaç:** Giriş yapan kullanıcı bilgisi
 **Auth:** Required
 **Response:** User profile
@@ -768,9 +893,11 @@ webtoon-ai-translator/
 ### 🌐 **Translation Endpoints** (`/api/v1/translate`)
 
 #### `POST /api/v1/translate/start`
+
 **Amaç:** Çeviri işlemini başlatır
 **Auth:** Required
 **Request:**
+
 ```json
 {
   "chapter_url": "string",
@@ -782,7 +909,9 @@ webtoon-ai-translator/
   "translate_type": 1
 }
 ```
+
 **Request Parametreleri:**
+
 - `chapter_url`: Bölüm URL'si (zorunlu)
 - `target_lang`: Hedef dil kodu (default: "tr")
 - `source_lang`: Kaynak dil kodu (default: "en")
@@ -796,21 +925,25 @@ webtoon-ai-translator/
 **Not:** `translate_type=1` (AI) ücretlidir ama yüksek kalite, `translate_type=2` (Free) ücretsizdir ama kalite düşüktür. Free çeviride özel isim sözlüğü otomatik kullanılır.
 
 #### `GET /api/v1/translate/status/{task_id}`
+
 **Amaç:** Çeviri işleminin durumunu kontrol eder
 **Auth:** Required
 **Response:** Status, progress (0-100)
 **Kullanım:** İşlem ilerlemesini takip etme
 
 #### `GET /api/v1/translate/result/{task_id}`
+
 **Amaç:** Tamamlanmış çeviri sonuçlarını getirir
 **Auth:** Required
 **Response:** Processed images list
 **Kullanım:** Çevrilmiş sayfaları görüntüleme
 
 #### `POST /api/v1/translate/batch/start`
+
 **Amaç:** Başlangıç ve bitiş bölüm numaraları ile toplu çeviri başlatır
 **Auth:** Required
 **Request:**
+
 ```json
 {
   "base_url": "https://webtoons.com/en/series/episode-{}/viewer",
@@ -823,7 +956,9 @@ webtoon-ai-translator/
   "translate_type": 1
 }
 ```
+
 **Request Parametreleri:**
+
 - `base_url`: URL pattern (bölüm numarası için `{}` placeholder)
 - `start_chapter`: Başlangıç bölüm numarası
 - `end_chapter`: Bitiş bölüm numarası
@@ -837,9 +972,11 @@ webtoon-ai-translator/
 **Kullanım:** Ardışık bölüm aralığı çevirisi (1-10 gibi)
 
 #### `POST /api/v1/translate/batch/range`
+
 **Amaç:** Esnek bölüm aralığı çevirisi başlatır (örn: "1-10", "5,7,9", "1-5,10-15")
 **Auth:** Required
 **Request:**
+
 ```json
 {
   "series_url": "https://webtoons.com/en/series/episode-{}/viewer",
@@ -851,7 +988,9 @@ webtoon-ai-translator/
   "translate_type": 1
 }
 ```
+
 **Request Parametreleri:**
+
 - `series_url`: URL pattern (bölüm numarası için `{}` placeholder)
 - `chapter_range`: Bölüm aralığı (örn: "1-10", "5,7,9", "1-5,10-15")
 - `source_lang`: Kaynak dil (default: "en")
@@ -866,28 +1005,82 @@ webtoon-ai-translator/
 
 ---
 
+### ✏️ **Translation Editor Endpoints** (`/api/v1/translation`)
+
+#### `GET /api/v1/translation/{task_id}/review`
+
+**Amaç:** Çeviri sonucunu manuel inceleme için getir (Human-in-the-Loop)
+**Auth:** Required
+**Query Params:** `page_index` (optional)
+**Response:** Translation review data (original + translated texts side-by-side)
+**Kullanım:** AI çevirisini inceleme, düzenleme öncesi görüntüleme
+
+#### `POST /api/v1/translation/review`
+
+**Amaç:** Çeviriyi onaylama/reddetme/düzenleme
+**Auth:** Required
+**Request:**
+
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "action": "approve|reject|edit",
+  "edited_text": "Düzenlenmiş metin" // action=edit için gerekli
+}
+```
+
+**Response:** Review result
+**Kullanım:** Çeviriyi onaylama, reddetme veya düzenleme
+
+#### `POST /api/v1/translation/edit`
+
+**Amaç:** Spesifik bir çeviri bloğunu manuel düzenleme
+**Auth:** Required
+**Request:**
+
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "original_text": "Orijinal metin",
+  "translated_text": "Düzenlenmiş çeviri"
+}
+```
+
+**Response:** Edited translation
+**Kullanım:** Manuel çeviri düzeltme
+
+---
+
 ### 📚 **Series Endpoints** (`/api/v1/series`)
 
 #### `GET /api/v1/series`
+
 **Amaç:** Seri listesi (public, cached)
 **Auth:** Optional
 **Query Params:**
+
 - `skip`: Pagination offset
 - `limit`: Page size
 - `search`: Arama terimi
 - `genre`: Genre filtresi
 - `status`: Status filtresi (ongoing, completed)
 - `sort`: Sıralama (newest, popular, rating)
-**Response:** Series list
-**Kullanım:** Ana sayfa seri listesi
+  **Response:** Series list
+  **Kullanım:** Ana sayfa seri listesi
 
 #### `GET /api/v1/series/{series_id}`
+
 **Amaç:** Seri detay sayfası (public, cached)
 **Auth:** Optional
 **Response:** Series details, chapters, ratings, bookmarks
 **Kullanım:** Seri detay sayfası
 
 #### `POST /api/v1/series`
+
 **Amaç:** Yeni seri oluşturur (Admin only)
 **Auth:** Required (Admin)
 **Request:** SeriesCreate schema
@@ -895,61 +1088,74 @@ webtoon-ai-translator/
 **Kullanım:** Admin seri ekleme
 
 #### `PUT /api/v1/series/{series_id}`
+
 **Amaç:** Seri güncelleme (Admin only)
 **Auth:** Required (Admin)
 **Request:** SeriesUpdate schema (partial update)
 **Response:** Updated series
 **Kullanım:** Seri metadata güncelleme
 **Özellikler:**
+
 - ✅ Partial update (sadece gönderilen alanlar güncellenir)
 - ✅ Cache otomatik invalidate edilir
 
 #### `DELETE /api/v1/series/{series_id}`
+
 **Amaç:** Seri silme (Admin only - Soft delete)
 **Auth:** Required (Admin)
 **Response:** Deletion confirmation
 **Kullanım:** Seri silme (soft delete: is_active=False, is_published=False)
 **Özellikler:**
+
 - ✅ Soft delete (veriler silinmez, sadece pasif edilir)
 - ✅ Cache otomatik invalidate edilir
 
 #### `PUT /api/v1/chapters/{chapter_id}`
+
 **Amaç:** Bölüm güncelleme (Admin only)
 **Auth:** Required (Admin)
 **Request:** ChapterCreate schema (partial update)
 **Response:** Updated chapter
 **Kullanım:** Bölüm metadata güncelleme
 **Özellikler:**
+
 - ✅ Partial update
 - ✅ series_id değiştirilemez
 - ✅ Cache otomatik invalidate edilir
 
 #### `DELETE /api/v1/chapters/{chapter_id}`
+
 **Amaç:** Bölüm silme (Admin only - Soft delete)
 **Auth:** Required (Admin)
 **Response:** Deletion confirmation
 **Kullanım:** Bölüm silme (soft delete: is_published=False)
 **Özellikler:**
+
 - ✅ Soft delete
 - ✅ Cache otomatik invalidate edilir
 
 #### `POST /api/v1/chapters/{chapter_id}/publish`
+
 **Amaç:** Bölüm yayınlama/yayından kaldırma (Admin only)
 **Auth:** Required (Admin)
 **Query Params:**
+
 - `publish`: true (yayınla) veya false (yayından kaldır)
-**Response:** Publish status
-**Kullanım:** Bölüm yayın durumu kontrolü
+  **Response:** Publish status
+  **Kullanım:** Bölüm yayın durumu kontrolü
 
 #### `POST /api/v1/chapters/{chapter_id}/translations/{translation_id}/publish`
+
 **Amaç:** Translation yayınlama/yayından kaldırma (Admin only)
 **Auth:** Required (Admin)
 **Query Params:**
+
 - `publish`: true (yayınla) veya false (yayından kaldır)
-**Response:** Publish status
-**Kullanım:** Translation yayın durumu kontrolü
+  **Response:** Publish status
+  **Kullanım:** Translation yayın durumu kontrolü
 
 #### `GET /api/v1/series/{series_id}/chapters`
+
 **Amaç:** Seriye ait bölüm listesi (public, cached)
 **Auth:** Optional
 **Query Params:** skip, limit
@@ -957,12 +1163,15 @@ webtoon-ai-translator/
 **Kullanım:** Seri bölüm listesi
 
 #### `GET /api/v1/chapters/{chapter_id}/translations`
+
 **Amaç:** Bölümün mevcut çeviri versiyonları (public, cached)
 **Auth:** Optional
-**Query Params:** 
+**Query Params:**
+
 - `source_lang`: Kaynak dil filtresi (optional)
 - `target_lang`: Hedef dil filtresi (optional)
-**Response:** 
+  **Response:**
+
 ```json
 {
   "id": 1,
@@ -976,23 +1185,27 @@ webtoon-ai-translator/
   "view_count": 150
 }
 ```
+
 **Kullanım:** Çeviri versiyonlarını görüntüleme, dil seçimi
 **Cache:** 10 dakika (TTL: 600)
 
 #### `POST /api/v1/chapters/{chapter_id}/translate`
+
 **Amaç:** Premium kullanıcılar için bölüm çevirisi talep etme
 **Auth:** Required (Premium)
 **Query Params:**
+
 - `source_lang`: Kaynak dil (default: "en")
 - `target_lang`: Hedef dil (default: "tr")
 - `translate_type`: Çeviri tipi - `1` (AI) veya `2` (Free) (default: 1)
-**Response:** Task ID
-**Kullanım:** Premium kullanıcılar bölüm çevirisi talep edebilir
-**Not:** Aylık bölüm limiti kontrol edilir, aşılırsa ödeme gerekir
-**Amaç:** Bölüm için çeviri isteği (Premium)
-**Auth:** Required (Premium)
-**Query Params:** `target_lang` (string, required)
-**Response:** 
+  **Response:** Task ID
+  **Kullanım:** Premium kullanıcılar bölüm çevirisi talep edebilir
+  **Not:** Aylık bölüm limiti kontrol edilir, aşılırsa ödeme gerekir
+  **Amaç:** Bölüm için çeviri isteği (Premium)
+  **Auth:** Required (Premium)
+  **Query Params:** `target_lang` (string, required)
+  **Response:**
+
 ```json
 {
   "chapter_id": 5,
@@ -1001,32 +1214,38 @@ webtoon-ai-translator/
   "translation_id": 10
 }
 ```
+
 **Kullanım:** Premium kullanıcı çeviri isteği
 **Özellikler:**
+
 - Aylık limit kontrolü
 - Limit aşılırsa ödeme gerektirme (402 Payment Required)
 - Otomatik ChapterTranslation oluşturma
 - Çeviri tamamlandığında otomatik yayınlama
-**Cache Invalidation:** Chapter ve series cache'i temizlenir
+  **Cache Invalidation:** Chapter ve series cache'i temizlenir
 
 ---
 
 ### 💬 **Comment Endpoints** (`/api/v1/comments`)
 
 #### `GET /api/v1/comments`
+
 **Amaç:** Yorum listesi (public, cached)
 **Auth:** Optional
 **Query Params:**
+
 - `series_id`: Seri filtresi
 - `chapter_id`: Bölüm filtresi
 - `skip`, `limit`: Pagination
-**Response:** Comment list with nested replies
-**Kullanım:** Yorumları görüntüleme
+  **Response:** Comment list with nested replies
+  **Kullanım:** Yorumları görüntüleme
 
 #### `POST /api/v1/comments`
+
 **Amaç:** Yeni yorum yazma
 **Auth:** Required
 **Request:**
+
 ```json
 {
   "series_id": 1,
@@ -1035,10 +1254,12 @@ webtoon-ai-translator/
   "attachments": []
 }
 ```
+
 **Response:** Created comment
 **Kullanım:** Yorum yazma
 
 #### `POST /api/v1/comments/{comment_id}/reply`
+
 **Amaç:** Yorum cevaplama
 **Auth:** Required
 **Request:** content (string)
@@ -1046,9 +1267,11 @@ webtoon-ai-translator/
 **Kullanım:** Yorum cevaplama
 
 #### `POST /api/v1/comments/{comment_id}/like`
+
 **Amaç:** Yorum beğenme/unlike (toggle)
 **Auth:** Required
-**Response:** 
+**Response:**
+
 ```json
 {
   "comment_id": 5,
@@ -1056,11 +1279,13 @@ webtoon-ai-translator/
   "liked": true
 }
 ```
+
 **Kullanım:** Yorum beğenme/beğenmeme (toggle)
 **Özellik:** İlk çağrıda beğenir, ikinci çağrıda beğeniyi kaldırır
 **Cache Invalidation:** Comment cache temizlenir
 
 #### `PUT /api/v1/comments/{comment_id}`
+
 **Amaç:** Yorum düzenleme
 **Auth:** Required (own comment or admin)
 **Request:** CommentUpdate schema
@@ -1068,6 +1293,7 @@ webtoon-ai-translator/
 **Kullanım:** Yorum düzenleme
 
 #### `DELETE /api/v1/comments/{comment_id}`
+
 **Amaç:** Yorum silme (soft delete)
 **Auth:** Required (own comment or admin)
 **Response:** Success message
@@ -1078,16 +1304,19 @@ webtoon-ai-translator/
 ### ⚡ **Reaction Endpoints** (`/api/v1/reactions`)
 
 #### `POST /api/v1/reactions`
+
 **Amaç:** Tepki ekleme (emoji, gif, memoji)
 **Auth:** Required
 **Query Params:**
+
 - `reaction_type`: emoji, gif, memoji
 - `reaction_value`: Tepki değeri
 - `series_id` OR `chapter_id` OR `comment_id`: Hedef entity
-**Response:** Reaction data
-**Kullanım:** Seri/bölüm/yoruma tepki verme
+  **Response:** Reaction data
+  **Kullanım:** Seri/bölüm/yoruma tepki verme
 
 #### `DELETE /api/v1/reactions`
+
 **Amaç:** Tepki kaldırma
 **Auth:** Required
 **Query Params:** series_id OR chapter_id OR comment_id
@@ -1095,6 +1324,7 @@ webtoon-ai-translator/
 **Kullanım:** Tepki kaldırma
 
 #### `GET /api/v1/reactions`
+
 **Amaç:** Tepkileri görüntüleme (public, cached)
 **Auth:** Optional
 **Query Params:** series_id OR chapter_id OR comment_id
@@ -1106,16 +1336,19 @@ webtoon-ai-translator/
 ### 📖 **Reading Endpoints** (`/api/v1/reading`)
 
 #### `POST /api/v1/reading/history`
+
 **Amaç:** Okuma geçmişi güncelleme
 **Auth:** Required
 **Query Params:**
+
 - `chapter_id`: Bölüm ID
 - `translation_id`: Çeviri ID (optional)
 - `last_page`: Son okunan sayfa
-**Response:** Updated history
-**Kullanım:** Okuma ilerlemesini kaydetme
+  **Response:** Updated history
+  **Kullanım:** Okuma ilerlemesini kaydetme
 
 #### `GET /api/v1/reading/history`
+
 **Amaç:** Okuma geçmişi listesi (cached)
 **Auth:** Required
 **Query Params:** skip, limit
@@ -1123,21 +1356,25 @@ webtoon-ai-translator/
 **Kullanım:** Okuma geçmişini görüntüleme
 
 #### `POST /api/v1/bookmarks`
+
 **Amaç:** Favori ekleme
 **Auth:** Required
 **Query Params:**
+
 - `series_id`: Seri ID
 - `notes`: Notlar (optional)
-**Response:** Bookmark data
-**Kullanım:** Seriyi favorilere ekleme
+  **Response:** Bookmark data
+  **Kullanım:** Seriyi favorilere ekleme
 
 #### `DELETE /api/v1/bookmarks/{series_id}`
+
 **Amaç:** Favori kaldırma
 **Auth:** Required
 **Response:** Success message
 **Kullanım:** Favoriden çıkarma
 
 #### `GET /api/v1/bookmarks`
+
 **Amaç:** Favori listesi (cached)
 **Auth:** Required
 **Query Params:** skip, limit
@@ -1145,13 +1382,16 @@ webtoon-ai-translator/
 **Kullanım:** Favorileri görüntüleme
 
 #### `POST /api/v1/ratings`
+
 **Amaç:** Seri veya bölüme puan verme
 **Auth:** Required
 **Query Params:**
+
 - `series_id` OR `chapter_id`: Hedef entity (exactly one required)
 - `rating`: 1-5 arası puan (required)
 - `review`: İnceleme metni (optional)
-**Response:** 
+  **Response:**
+
 ```json
 {
   "rating": 5,
@@ -1159,24 +1399,28 @@ webtoon-ai-translator/
   "chapter_id": null
 }
 ```
+
 **Kullanım:** Seri/bölüme puan verme
-**Özellik:** 
+**Özellik:**
+
 - Mevcut puan varsa günceller
 - Seri/chapter ortalama puanını otomatik günceller
 - Rating count'u günceller
-**Cache Invalidation:** Series/chapter cache temizlenir
+  **Cache Invalidation:** Series/chapter cache temizlenir
 
 ---
 
 ### 💳 **Subscription Endpoints** (`/api/v1/subscription`)
 
 #### `GET /api/v1/subscription`
+
 **Amaç:** Kullanıcının abonelik bilgisi
 **Auth:** Required
 **Response:** Subscription details
 **Kullanım:** Abonelik durumu görüntüleme
 
 #### `POST /api/v1/subscription/upgrade`
+
 **Amaç:** Abonelik yükseltme
 **Auth:** Required
 **Query Params:** plan_type (free, basic, premium)
@@ -1184,33 +1428,39 @@ webtoon-ai-translator/
 **Kullanım:** Premium'a geçiş
 
 #### `POST /api/v1/subscription/payment`
+
 **Amaç:** Extra bölüm ödemesi (basit ödeme kaydı)
 **Auth:** Required
-**Request:** 
+**Request:**
+
 ```json
 {
   "chapter_count": 5,
   "payment_method": "stripe"
 }
 ```
+
 **Response:** PaymentResponse (payment record)
 **Kullanım:** Ekstra bölüm satın alma (basit kayıt)
 **Not:** Gerçek ödeme için `/api/v1/payments/create-intent` kullanın
 
 #### `POST /api/v1/payments/create-intent`
+
 **Amaç:** Stripe payment intent oluşturma (gerçek ödeme)
 **Auth:** Required
 **Request:** PaymentRequest schema
-**Response:** 
+**Response:**
+
 ```json
 {
   "payment_id": 1,
   "client_secret": "pi_xxx_secret_yyy",
   "payment_intent_id": "pi_xxx",
-  "amount": 2.50,
+  "amount": 2.5,
   "chapter_count": 5
 }
 ```
+
 **Kullanım:** Stripe ile gerçek ödeme başlatma
 **Özellik:** Frontend'de Stripe Elements ile ödeme tamamlama için client_secret döner
 
@@ -1219,6 +1469,7 @@ webtoon-ai-translator/
 ### 💰 **Payment Endpoints** (`/api/v1/payments`)
 
 #### `POST /api/v1/payments/create-intent`
+
 **Amaç:** Stripe payment intent oluşturma
 **Auth:** Required
 **Request:** PaymentRequest schema
@@ -1226,6 +1477,7 @@ webtoon-ai-translator/
 **Kullanım:** Ödeme başlatma
 
 #### `POST /api/v1/payments/confirm`
+
 **Amaç:** Ödeme onaylama
 **Auth:** Required
 **Query Params:** payment_intent_id
@@ -1233,6 +1485,7 @@ webtoon-ai-translator/
 **Kullanım:** Ödeme tamamlama
 
 #### `POST /api/v1/payments/webhook`
+
 **Amaç:** Stripe webhook handler
 **Auth:** None (Stripe signature)
 **Request:** Stripe webhook event
@@ -1244,27 +1497,32 @@ webtoon-ai-translator/
 ### 🔔 **Notification Endpoints** (`/api/v1/notifications`)
 
 #### `GET /api/v1/notifications`
+
 **Amaç:** Bildirim listesi
 **Auth:** Required
 **Query Params:**
+
 - `skip`, `limit`: Pagination
 - `unread_only`: Sadece okunmamışlar
-**Response:** Notification list
-**Kullanım:** Bildirimleri görüntüleme
+  **Response:** Notification list
+  **Kullanım:** Bildirimleri görüntüleme
 
 #### `PUT /api/v1/notifications/{notification_id}/read`
+
 **Amaç:** Bildirimi okundu işaretleme
 **Auth:** Required
 **Response:** Success message
 **Kullanım:** Bildirim okundu
 
 #### `PUT /api/v1/notifications/read-all`
+
 **Amaç:** Tüm bildirimleri okundu işaretleme
 **Auth:** Required
 **Response:** Success message
 **Kullanım:** Toplu okundu işaretleme
 
 #### `GET /api/v1/notifications/unread-count`
+
 **Amaç:** Okunmamış bildirim sayısı
 **Auth:** Required
 **Response:** Unread count
@@ -1275,12 +1533,14 @@ webtoon-ai-translator/
 ### 👤 **User Endpoints** (`/api/v1/users`)
 
 #### `GET /api/v1/profile`
+
 **Amaç:** Kullanıcı profil bilgisi
 **Auth:** Required
 **Response:** User profile
 **Kullanım:** Profil görüntüleme
 
 #### `PUT /api/v1/profile`
+
 **Amaç:** Profil güncelleme
 **Auth:** Required
 **Request:** UpdateUserRequest schema
@@ -1288,6 +1548,7 @@ webtoon-ai-translator/
 **Kullanım:** Profil düzenleme
 
 #### `POST /api/v1/change-password`
+
 **Amaç:** Şifre değiştirme
 **Auth:** Required
 **Request:** ChangePasswordRequest schema
@@ -1299,6 +1560,7 @@ webtoon-ai-translator/
 ### 🌍 **Public Endpoints** (`/api/v1/public`)
 
 #### `GET /api/v1/public/series`
+
 **Amaç:** Seri listesi (no auth required, cached)
 **Auth:** None
 **Query Params:** skip, limit, search, genre, status, sort
@@ -1306,23 +1568,28 @@ webtoon-ai-translator/
 **Kullanım:** Guest kullanıcı seri listesi
 
 #### `GET /api/v1/public/series/{series_id}`
+
 **Amaç:** Seri detay sayfası (no auth required)
 **Auth:** None
 **Response:** Series details with chapters, ratings
 **Kullanım:** Guest kullanıcı seri detayı
 
 #### `GET /api/v1/public/chapters/{chapter_id}`
+
 **Amaç:** Bölüm detay (no auth required)
 **Auth:** None
 **Response:** Chapter details, available translations
 **Kullanım:** Guest kullanıcı bölüm detayı
 
 #### `GET /api/v1/public/chapters/{chapter_id}/read/{translation_id}`
+
 **Amaç:** Bölüm okuma - sayfa listesi ve URL'leri (no auth required)
 **Auth:** None
-**Query Params:** 
+**Query Params:**
+
 - `page`: Mevcut sayfa numarası (optional, default: 1)
-**Response:** 
+  **Response:**
+
 ```json
 {
   "chapter_id": 5,
@@ -1340,10 +1607,12 @@ webtoon-ai-translator/
   "target_lang": "tr"
 }
 ```
+
 **Kullanım:** Guest kullanıcı bölüm okuma
 **Özellik:** View count otomatik artırılır
 
 #### `GET /api/v1/public/comments`
+
 **Amaç:** Yorum listesi (no auth required, cached)
 **Auth:** None
 **Query Params:** series_id, chapter_id, skip, limit
@@ -1355,20 +1624,23 @@ webtoon-ai-translator/
 ### 📁 **File Endpoints** (`/api/v1/files`)
 
 #### `GET /api/v1/files/{series_name}/{source_lang}_to_{target_lang}/chapter_{chapter_number:04d}/page_{page_number:03d}.jpg`
+
 **Amaç:** Çevrilmiş sayfa görseli servisi (public, auth optional)
 **Auth:** Optional
 **Path Params:**
+
 - `series_name`: Seri adı (URL-safe)
 - `source_lang`: Kaynak dil kodu (en, ko, ja, vb.)
 - `target_lang`: Hedef dil kodu (tr, es, fr, vb.)
 - `chapter_number`: Bölüm numarası (4 haneli, zero-padded: 0001, 0002, ...)
 - `page_number`: Sayfa numarası (3 haneli, zero-padded: 001, 002, ...)
-**Response:** JPEG image file (binary)
-**Content-Type:** `image/jpeg`
-**Kullanım:** Sayfa görseli görüntüleme
-**Örnek URL:** `/api/v1/files/Eleceed/en_to_tr/chapter_0005/page_001.jpg`
+  **Response:** JPEG image file (binary)
+  **Content-Type:** `image/jpeg`
+  **Kullanım:** Sayfa görseli görüntüleme
+  **Örnek URL:** `/api/v1/files/Eleceed/en_to_tr/chapter_0005/page_001.jpg`
 
 #### `GET /api/v1/files/{series_name}/chapters`
+
 **Amaç:** Seriye ait bölüm listesi (public, auth optional)
 **Auth:** Optional
 **Query Params:** source_lang, target_lang
@@ -1380,15 +1652,18 @@ webtoon-ai-translator/
 ### 📊 **Job Endpoints** (`/api/v1/jobs`)
 
 #### `GET /api/v1/jobs`
+
 **Amaç:** Çeviri iş geçmişi
 **Auth:** Required
 **Query Params:**
+
 - `skip`, `limit`: Pagination
 - `status_filter`: Status filtresi
-**Response:** Job history list
-**Kullanım:** İş geçmişini görüntüleme
+  **Response:** Job history list
+  **Kullanım:** İş geçmişini görüntüleme
 
 #### `DELETE /api/v1/jobs/{task_id}`
+
 **Amaç:** İş kaydını silme
 **Auth:** Required
 **Response:** Success message
@@ -1399,12 +1674,14 @@ webtoon-ai-translator/
 ### ⚙️ **Admin Endpoints** (`/api/v1/admin`)
 
 #### `DELETE /api/v1/admin/cache/clear`
+
 **Amaç:** Tüm cache'i temizleme (Admin only)
 **Auth:** Required (Admin)
 **Response:** Success message
 **Kullanım:** Cache temizleme
 
 #### `GET /api/v1/admin/stats`
+
 **Amaç:** Sistem istatistikleri (Admin only)
 **Auth:** Required (Admin)
 **Response:** System statistics
@@ -1415,9 +1692,11 @@ webtoon-ai-translator/
 ### 📝 **Log Endpoints** (`/api/v1/admin/logs`)
 
 #### `GET /api/v1/admin/logs`
+
 **Amaç:** Uygulama loglarını görüntüleme (Admin only)
 **Auth:** Required (Admin)
 **Query Params:**
+
 - `level`: Log level (INFO, WARNING, ERROR, DEBUG) - optional
 - `module`: Module filtresi (partial match) - optional
 - `request_id`: Request ID filtresi (exact match) - optional
@@ -1426,7 +1705,8 @@ webtoon-ai-translator/
 - `end_date`: Bitiş tarihi (ISO format) - optional
 - `skip`: Pagination offset (default: 0)
 - `limit`: Page size (default: 100, max: 1000)
-**Response:** 
+  **Response:**
+
 ```json
 {
   "logs": [
@@ -1439,7 +1719,7 @@ webtoon-ai-translator/
       "user_id": 5,
       "ip_address": "192.168.1.1",
       "user_agent": "Mozilla/5.0...",
-      "extra_data": {"error": "Connection timeout"},
+      "extra_data": { "error": "Connection timeout" },
       "created_at": "2026-01-06T10:30:00Z"
     }
   ],
@@ -1448,16 +1728,20 @@ webtoon-ai-translator/
   "limit": 100
 }
 ```
+
 **Kullanım:** Log görüntüleme, hata takibi, debugging
 **Özellik:** Tüm loglar veritabanında saklanır (Log model)
 
 #### `GET /api/v1/admin/logs/stats`
+
 **Amaç:** Log istatistikleri (Admin only)
 **Auth:** Required (Admin)
-**Query Params:** 
+**Query Params:**
+
 - `start_date`: Başlangıç tarihi (ISO format) - optional
 - `end_date`: Bitiş tarihi (ISO format) - optional
-**Response:** 
+  **Response:**
+
 ```json
 {
   "total": 1500,
@@ -1476,6 +1760,7 @@ webtoon-ai-translator/
   "errors": 100
 }
 ```
+
 **Kullanım:** Log analizi, sistem sağlığı izleme, hata oranı takibi
 
 ---
@@ -1483,25 +1768,31 @@ webtoon-ai-translator/
 ### 🔄 **Cache Endpoints** (`/api/v1/cache`)
 
 #### `POST /api/v1/cache/refresh`
+
 **Amaç:** Manuel cache yenileme (belirli entity'ler için)
 **Auth:** Required
-**Query Params:** 
+**Query Params:**
+
 - `series_id`: Seri cache'ini temizle (optional)
 - `chapter_id`: Bölüm cache'ini temizle (optional)
 - `comment_id`: Yorum cache'ini temizle (optional)
-**Response:** 
+  **Response:**
+
 ```json
 {
   "invalidated": ["series_1", "chapter_5", "comments"]
 }
 ```
+
 **Kullanım:** Cache manuel yenileme (yeni içerik görünmüyorsa)
 **Not:** Hiçbir parametre verilmezse tüm cache temizlenir
 
 #### `GET /api/v1/cache/status`
+
 **Amaç:** Cache durumu ve istatistikleri
 **Auth:** Required
-**Response:** 
+**Response:**
+
 ```json
 {
   "status": "enabled",
@@ -1510,6 +1801,7 @@ webtoon-ai-translator/
   "memory_peak": "50.1MB"
 }
 ```
+
 **Kullanım:** Cache durumu kontrolü, Redis memory kullanımı
 **Not:** Redis bağlantısı yoksa `"status": "disabled"` döner
 
@@ -1518,64 +1810,76 @@ webtoon-ai-translator/
 ### 🔍 **Discovery Endpoints** (`/api/v1/`)
 
 #### `GET /api/v1/series/trending`
+
 **Amaç:** Trending seriler (günlük/haftalık/aylık)
 **Auth:** None
 **Query Params:**
+
 - `skip`: Pagination offset
 - `limit`: Page size (max 50)
 - `period`: "day", "week", "month"
-**Response:** Trending series list
-**Kullanım:** Ana sayfa trending bölümü
-**Cache:** 1 saat
+  **Response:** Trending series list
+  **Kullanım:** Ana sayfa trending bölümü
+  **Cache:** 1 saat
 
 #### `GET /api/v1/series/featured`
+
 **Amaç:** Öne çıkan seriler (admin-selected)
 **Auth:** None
 **Query Params:**
+
 - `skip`: Pagination offset
 - `limit`: Page size (max 50)
-**Response:** Featured series list
-**Kullanım:** Ana sayfa featured bölümü
-**Cache:** 30 dakika
+  **Response:** Featured series list
+  **Kullanım:** Ana sayfa featured bölümü
+  **Cache:** 30 dakika
 
 #### `GET /api/v1/series/recommendations`
+
 **Amaç:** Kullanıcıya özel öneriler
 **Auth:** Optional (guest için popüler seriler)
 **Query Params:**
+
 - `skip`: Pagination offset
 - `limit`: Page size (max 50)
-**Response:** Recommended series list
-**Kullanım:** Kişiselleştirilmiş öneriler
-**Özellikler:**
+  **Response:** Recommended series list
+  **Kullanım:** Kişiselleştirilmiş öneriler
+  **Özellikler:**
 - ✅ Authenticated users: Okuma geçmişi ve bookmark'lara göre öneriler
 - ✅ Guest users: Popüler seriler
-**Cache:** 30 dakika (kullanıcı bazlı)
+  **Cache:** 30 dakika (kullanıcı bazlı)
 
 #### `GET /api/v1/series/popular`
+
 **Amaç:** Popüler seriler (görüntülenme sayısına göre)
 **Auth:** None
 **Query Params:**
+
 - `skip`: Pagination offset
 - `limit`: Page size (max 50)
 - `period`: "day", "week", "month", "all"
-**Response:** Popular series list
-**Kullanım:** Popüler seriler sayfası
-**Cache:** 1 saat
+  **Response:** Popular series list
+  **Kullanım:** Popüler seriler sayfası
+  **Cache:** 1 saat
 
 #### `GET /api/v1/series/newest`
+
 **Amaç:** En yeni seriler
 **Auth:** None
 **Query Params:**
+
 - `skip`: Pagination offset
 - `limit`: Page size (max 50)
-**Response:** Newest series list
-**Kullanım:** Yeni seriler sayfası
-**Cache:** 10 dakika
+  **Response:** Newest series list
+  **Kullanım:** Yeni seriler sayfası
+  **Cache:** 10 dakika
 
 #### `GET /api/v1/tags`
+
 **Amaç:** Tüm mevcut tag'leri listele
 **Auth:** None
 **Response:**
+
 ```json
 {
   "all_tags": ["action", "comedy", "system", "return", ...],
@@ -1584,28 +1888,31 @@ webtoon-ai-translator/
   "total_count": 200
 }
 ```
+
 **Kullanım:** Tag seçimi için dropdown/liste
 **Cache:** 24 saat
 
 #### `GET /api/v1/tags/validate`
+
 **Amaç:** Tag isimlerini validate et
 **Auth:** None
 **Query Params:**
+
 - `tag_names`: List of tag names (comma-separated veya query array)
-**Response:**
+  **Response:**
+
 ```json
 {
   "valid_tags": [
-    {"original": "comedy", "normalized": "comedy", "valid": true},
-    {"original": "aksiyon", "normalized": "action", "valid": true}
+    { "original": "comedy", "normalized": "comedy", "valid": true },
+    { "original": "aksiyon", "normalized": "action", "valid": true }
   ],
-  "invalid_tags": [
-    {"original": "invalid-tag", "valid": false}
-  ],
+  "invalid_tags": [{ "original": "invalid-tag", "valid": false }],
   "total_valid": 2,
   "total_invalid": 1
 }
 ```
+
 **Kullanım:** Tag validation, frontend'de tag seçimi
 
 ---
@@ -1613,12 +1920,14 @@ webtoon-ai-translator/
 ### ⚙️ **Site Settings Endpoints** (`/api/v1/settings`)
 
 #### `GET /api/v1/settings`
+
 **Amaç:** Site ayarları (public)
 **Auth:** None
 **Response:** Site settings
 **Kullanım:** Site konfigürasyonu görüntüleme
 
 #### `PUT /api/v1/settings`
+
 **Amaç:** Site ayarları güncelleme (Admin only)
 **Auth:** Required (Admin)
 **Request:** SiteSettingsUpdate schema
@@ -1630,9 +1939,11 @@ webtoon-ai-translator/
 ### 📈 **Metrics Endpoints** (`/api/v1/metrics`)
 
 #### `GET /api/v1/metrics/summary`
+
 **Amaç:** Uygulama metrikleri özeti
 **Auth:** Required
-**Response:** 
+**Response:**
+
 ```json
 {
   "api": {
@@ -1648,6 +1959,7 @@ webtoon-ai-translator/
   }
 }
 ```
+
 **Kullanım:** Performans izleme, sistem sağlığı kontrolü
 **Cache:** Yok (real-time data)
 
@@ -1656,6 +1968,7 @@ webtoon-ai-translator/
 ## 🎯 **ENDPOINT ÖZETİ**
 
 ### Public Endpoints (No Auth)
+
 - ✅ Series list/detail
 - ✅ Chapter list/detail
 - ✅ Chapter reading
@@ -1665,6 +1978,7 @@ webtoon-ai-translator/
 - ✅ Site settings
 
 ### Authenticated Endpoints (Auth Required)
+
 - ✅ Translation requests
 - ✅ Comment create/update/delete
 - ✅ Reaction add/remove
@@ -1676,6 +1990,7 @@ webtoon-ai-translator/
 - ✅ Subscription management
 
 ### Admin Endpoints (Admin Required)
+
 - ✅ Cache management
 - ✅ System statistics
 - ✅ Log viewing
@@ -1689,27 +2004,27 @@ webtoon-ai-translator/
 
 ### 📊 **Endpoint İstatistikleri**
 
-| Kategori | Endpoint Sayısı | Auth Gereksinimi |
-|----------|----------------|------------------|
-| Authentication | 3 | Mixed |
-| Translation | 5 | Required |
-| Series | 6 | Mixed (Public + Admin) |
-| Comments | 6 | Mixed (Public + Required) |
-| Reactions | 3 | Mixed (Public + Required) |
-| Reading | 6 | Required |
-| Subscription | 3 | Required |
-| Payments | 3 | Required |
-| Notifications | 4 | Required |
-| Users | 3 | Required |
-| Public | 5 | None |
-| Files | 2 | Optional |
-| Jobs | 2 | Required |
-| Admin | 2 | Admin |
-| Logs | 2 | Admin |
-| Cache | 2 | Required |
-| Site Settings | 2 | Mixed (Public + Admin) |
-| Metrics | 1 | Required |
-| **TOPLAM** | **60+** | - |
+| Kategori       | Endpoint Sayısı | Auth Gereksinimi          |
+| -------------- | --------------- | ------------------------- |
+| Authentication | 3               | Mixed                     |
+| Translation    | 5               | Required                  |
+| Series         | 6               | Mixed (Public + Admin)    |
+| Comments       | 6               | Mixed (Public + Required) |
+| Reactions      | 3               | Mixed (Public + Required) |
+| Reading        | 6               | Required                  |
+| Subscription   | 3               | Required                  |
+| Payments       | 3               | Required                  |
+| Notifications  | 4               | Required                  |
+| Users          | 3               | Required                  |
+| Public         | 5               | None                      |
+| Files          | 2               | Optional                  |
+| Jobs           | 2               | Required                  |
+| Admin          | 2               | Admin                     |
+| Logs           | 2               | Admin                     |
+| Cache          | 2               | Required                  |
+| Site Settings  | 2               | Mixed (Public + Admin)    |
+| Metrics        | 1               | Required                  |
+| **TOPLAM**     | **60+**         | -                         |
 
 ---
 
@@ -1730,6 +2045,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 🏷️ **Tag & Category Sistemi**
 
 #### WebtoonTag Enum
+
 - **200+ Tag**: Tüm webtoon tag'leri enum olarak tanımlanmış
 - **Kategoriler:**
   - **Genre Tags** (14): action, adventure, comedy, drama, fantasy, horror, mystery, romance, sci-fi, slice-of-life, sports, supernatural, thriller, western
@@ -1742,11 +2058,13 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
   - Ve daha fazlası...
 
 #### Tag Validation
+
 - Tag'ler enum'dan validate edilir
 - Geçersiz tag'ler otomatik atlanır
 - Tag isimleri normalize edilir (büyük/küçük harf, özel karakterler)
 
 #### Endpoint'ler
+
 - `GET /api/v1/tags` - Tüm tag'leri listele
 - `GET /api/v1/tags/validate?tag_names=comedy,action` - Tag'leri validate et
 
@@ -1755,9 +2073,11 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 📚 **Seri Yönetimi ve Otomatik Çeviri Akışı**
 
 #### SeriesManager Service
+
 **Lokasyon:** `app/services/series_manager.py`
 
 **Özellikler:**
+
 - `create_or_get_series()`: Seri bulma/oluşturma
   - Aynı isimde seri varsa: Mevcut seriyi kullanır (yeni oluşturmaz)
   - Aynı isimde seri yoksa: Yeni seri oluşturulur
@@ -1771,9 +2091,11 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
   - Aynı dil çifti yoksa: Yeni translation oluşturulur
 
 #### Otomatik Seri Oluşturma
+
 **Lokasyon:** `app/operations/translation_publisher.py`
 
 **Akış:**
+
 1. Çeviri tamamlandığında `publish_translation_on_completion()` çağrılır
 2. Seri kontrolü: Aynı isimde seri varsa kullanılır, yoksa oluşturulur
 3. Chapter kontrolü: Chapter number URL'den otomatik çıkarılır, çakışma yönetilir
@@ -1787,6 +2109,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 🔍 **Discovery Özellikleri**
 
 #### Yeni Endpoint'ler
+
 - `GET /api/v1/series/trending` - Trending seriler (günlük/haftalık/aylık)
 - `GET /api/v1/series/featured` - Öne çıkan seriler (admin-selected)
 - `GET /api/v1/series/recommendations` - Kullanıcıya özel öneriler
@@ -1796,6 +2119,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 - `GET /api/v1/tags/validate` - Tag validation
 
 **Özellikler:**
+
 - ✅ Redis cache desteği (TTL: 600-3600 saniye)
 - ✅ Kullanıcı bazlı öneriler (okuma geçmişi ve bookmark'lara göre)
 - ✅ Guest kullanıcılar için popüler seriler
@@ -1805,6 +2129,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 🔧 **Admin Content Management**
 
 #### Yeni Endpoint'ler
+
 - `POST /api/v1/admin/chapters/upload` - Manuel bölüm yükleme
 - `PUT /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa düzenleme
 - `DELETE /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa silme
@@ -1812,6 +2137,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 - `POST /api/v1/admin/series/{series_id}/chapters/bulk-publish` - Toplu yayınlama
 
 **Özellikler:**
+
 - ✅ Çeviri yaptırmadan direkt dosya yükleme
 - ✅ Sayfa seviyesinde düzenleme
 - ✅ Toplu işlemler
@@ -1826,6 +2152,406 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 3. ✅ **Veri Kaybı Önleme**: Chapter/translation çakışmalarında eski veriler korunur veya güvenli şekilde değiştirilir
 4. ✅ **Validation**: Tag'ler enum'dan validate edilir, geçersiz tag'ler atlanır
 5. ✅ **Seri Description Zorunluluğu**: Seri oluştururken description zorunludur
+
+---
+
+### 📖 **Glossary System (Sözlük Sistemi)**
+
+#### Genel Bakış
+
+Her seri için özel bir sözlük (glossary) tutulur. Bu sözlük, karakter isimleri, özel terimler ve tutarlı çeviri gerektiren kelimeleri içerir.
+
+#### Modeller
+
+**Lokasyon:** `app/models/dictionary.py`
+
+- **SeriesDictionary**: Seri bazlı sözlük (her dil çifti için ayrı)
+
+  - `series_id`: Seri ID
+  - `source_lang`: Kaynak dil
+  - `target_lang`: Hedef dil
+  - `max_entries`: Maksimum entry sayısı (default: 1000)
+
+- **DictionaryEntry**: Sözlük girişi
+  - `original_name`: Orijinal isim/terim
+  - `translated_name`: Çevrilmiş isim/terim
+  - `usage_count`: Kullanım sayısı
+  - `is_proper_noun`: Özel isim mi? (auto/yes/no)
+  - `last_used_at`: Son kullanım tarihi
+
+#### DictionaryService
+
+**Lokasyon:** `app/services/dictionary_service.py`
+
+**Metodlar:**
+
+- `get_or_create_dictionary()`: Sözlük bul/oluştur
+- `lookup_name()`: İsim arama
+- `add_or_update_entry()`: Entry ekle/güncelle
+- `apply_dictionary()`: Sözlüğü metinlere uygula (FREE translation için)
+- `cleanup_dictionary()`: En az kullanılan entry'leri temizle
+
+#### AI Translation Entegrasyonu
+
+**Lokasyon:** `app/services/ai_translator.py`
+
+- Glossary, AI translation'ın **system prompt'una** eklenir
+- AI'ya "Bu kelimeleri görürsen kesinlikle karşılığındaki gibi çevir" talimatı verilir
+- Örnek prompt:
+  ```
+  CRITICAL GLOSSARY RULES (MANDATORY):
+  The following terms MUST be translated EXACTLY as specified:
+    - "Hyung" → "Abi"
+    - "Dungeon" → "Zindan"
+    - "Hunter" → "Avcı"
+  ```
+
+#### Otomatik Özel İsim Tespiti
+
+- NER (Named Entity Recognition) servisi ile otomatik tespit
+- Yeni özel isimler sözlüğe eklenir
+- Kullanım sayısına göre otomatik temizleme
+
+---
+
+### 🧩 **Smart Chunking (Akıllı Bölümleme)**
+
+#### Genel Bakış
+
+Büyük metinler için token limitini aşmamak için akıllı bölümleme algoritması.
+
+**Lokasyon:** `app/services/ai_translator.py` → `_translate_with_chunking()`
+
+#### Algoritma
+
+1. **Token Tahmini**: ~4 karakter = 1 token
+2. **Güvenli Limit**: 100,000 token (GPT-4o-mini için 128k max, ama 100k güvenli)
+3. **Chunk Boyutu**: ~80,000 karakter (~20,000 token)
+4. **Context Preservation**: Her chunk'a önceki chunk'ın özeti eklenir
+
+#### Özellikler
+
+- ✅ Otomatik chunk boyutu hesaplama
+- ✅ Context koruma (önceki chunk'ın özeti)
+- ✅ Hata toleransı (bir chunk başarısız olsa bile diğerleri devam eder)
+- ✅ Otomatik padding/truncation (uzunluk uyumsuzluğu durumunda)
+
+#### Kullanım
+
+Otomatik olarak devreye girer. Metin boyutu 100k token'ı aşarsa smart chunking kullanılır.
+
+---
+
+### 🖼️ **WebP Format Support**
+
+#### Genel Bakış
+
+Resimler WebP formatında kaydedilir, boyut %50 azalır.
+
+**Lokasyon:** `app/services/image_processor.py`, `app/services/file_manager.py`
+
+#### Özellikler
+
+- ✅ **WebP Format**: Varsayılan format (quality: 90, method: 6)
+- ✅ **JPEG Fallback**: WebP desteklenmiyorsa otomatik JPEG'e geçer
+- ✅ **Format Detection**: Magic bytes ile otomatik format algılama
+- ✅ **Configurable**: `USE_WEBP` ve `IMAGE_QUALITY` config'den ayarlanabilir
+
+#### Config
+
+```python
+# app/core/config.py
+USE_WEBP: bool = True  # WebP kullan
+IMAGE_QUALITY: int = 90  # 0-100 arası kalite
+```
+
+#### Dosya Yapısı
+
+- WebP: `page_001.webp`
+- JPEG: `page_001.jpg` (fallback)
+- PNG: `page_001.png` (eğer PNG kaydedilirse)
+
+---
+
+### 🔐 **Cache/Lock Mechanism**
+
+#### Genel Bakış
+
+Aynı bölüm için aynı anda 2 çeviri başlatılmasını engeller.
+
+**Lokasyon:** `app/services/cache_service.py`
+
+#### Özellikler
+
+- ✅ **Redis Lock**: SET NX EX ile atomic lock
+- ✅ **Lock Timeout**: 1 saat (3600 saniye)
+- ✅ **Otomatik Release**: Task tamamlandığında veya hata olduğunda
+- ✅ **Duplicate Prevention**: Aynı chapter_url + target_lang + translate_type için lock
+
+#### Metodlar
+
+- `acquire_translation_lock()`: Lock al
+- `release_translation_lock()`: Lock bırak
+- `is_translation_locked()`: Lock durumunu kontrol et
+
+#### Kullanım
+
+**Lokasyon:** `app/api/v1/endpoints/translate.py`
+
+1. Translation başlatılmadan önce lock kontrolü
+2. Lock alınamazsa: 409 Conflict döner veya mevcut task ID döner
+3. Task tamamlandığında: Lock otomatik release edilir
+4. Hata durumunda: Lock otomatik release edilir
+
+---
+
+### 📝 **Text Wrapping Improvements**
+
+#### Genel Bakış
+
+Metinlerin balonlara düzgün sığması için geliştirilmiş text wrapping.
+
+**Lokasyon:** `app/services/image_processor.py` → `_wrap_text()`
+
+#### Özellikler
+
+- ✅ **textwrap Kütüphanesi**: Python'un textwrap modülü kullanılır
+- ✅ **Doğru Genişlik Hesaplama**: Font metrikleri ile gerçek genişlik hesaplanır
+- ✅ **Uzun Kelime Desteği**: `break_long_words=True` ile uzun kelimeler bölünür
+- ✅ **Hiphen Desteği**: `break_on_hyphens=True` ile tire işaretlerinde bölünür
+- ✅ **Karakter Bazlı Bölme**: Gerekirse karakter bazlı bölme yapılır
+
+#### Algoritma
+
+1. `textwrap.wrap()` ile metin satırlara bölünür
+2. Her satırın genişliği font metrikleri ile kontrol edilir
+3. Satır çok genişse karakter bazlı bölme yapılır
+4. Sonuç: Balona sığan, okunabilir metin
+
+---
+
+### ⚡ **Event Loop Blocking Düzeltmesi**
+
+#### Genel Bakış
+
+CPU-intensive işlemler (OCR, Image Processing) event loop'u bloklamaması için `run_in_executor` ile thread pool'a taşındı.
+
+**Lokasyon:** `app/services/image_processor.py`, `app/services/ocr_service.py`
+
+#### Özellikler
+
+- ✅ **Async Wrappers**: `process_image_async()`, `detect_text_blocks_async()` eklendi
+- ✅ **Thread Pool**: `ThreadPoolExecutor` ile ayrı thread'lerde çalışır
+- ✅ **Event Loop Protection**: FastAPI event loop bloklanmaz
+- ✅ **Celery Compatibility**: Celery task'lar zaten ayrı process'lerde, ama best practice için eklendi
+
+#### Kullanım
+
+```python
+# Async context'te kullanım
+processed_image = await image_processor.process_image_async(
+    image_bytes, blocks, translations
+)
+
+# Sync context'te (Celery) kullanım
+processed_image = image_processor.process_image(
+    image_bytes, blocks, translations
+)
+```
+
+---
+
+### 🔧 **Dinamik Scraper Configuration**
+
+#### Genel Bakış
+
+CSS selector'lar artık veritabanından yönetilebilir. Site yapısı değiştiğinde kod değiştirmeden admin panelinden güncellenebilir.
+
+**Lokasyon:** `app/models/scraper_config.py`, `app/services/scraper_config_service.py`
+
+#### ScraperConfig Modeli
+
+- `site_name`: Site adı (webtoons.com, asuracomic.net)
+- `selectors`: CSS selector'lar (JSON formatında)
+  ```json
+  {
+    "container": "div.reading-content",
+    "image": "img",
+    "image_attr": "data-src",
+    "title": "h1.chapter-title",
+    "next_chapter": "a.next-chapter"
+  }
+  ```
+- `fallback_selectors`: Yedek selector'lar
+- `config`: Ekstra config (user-agent, headers, timeout, vb.)
+- `is_active`: Aktif/pasif durumu
+- `last_updated`: Son güncelleme tarihi
+- `updated_by`: Güncelleyen admin
+
+#### ScraperConfigService
+
+**Metodlar:**
+
+- `get_config()`: Site için config getir
+- `get_default_selectors()`: Default selector'lar (fallback)
+- `get_selectors()`: DB'den veya default'tan selector'ları getir
+- `update_config()`: Config güncelle (admin tarafından)
+
+#### Kullanım
+
+```python
+# Scraper içinde kullanım
+selectors = ScraperConfigService.get_selectors(db, "webtoons.com")
+container = soup.select_one(selectors["container"])
+images = container.find_all(selectors["image"])
+```
+
+#### Avantajlar
+
+- ✅ **Kod Değiştirmeden Güncelleme**: Site yapısı değiştiğinde sadece DB'den güncelle
+- ✅ **Fallback Sistemi**: DB'de yoksa default selector'lar kullanılır
+- ✅ **Admin Yönetimi**: Admin panelinden kolayca güncellenebilir
+- ✅ **Version Control**: `last_updated` ve `updated_by` ile takip
+
+---
+
+### ✏️ **Human-in-the-Loop Editor**
+
+#### Genel Bakış
+
+AI çevirilerini manuel olarak inceleyip düzenleyebilme özelliği.
+
+**Lokasyon:** `app/api/v1/endpoints/translation_editor.py`
+
+#### Endpoint'ler
+
+**1. Çeviri İnceleme**
+
+```
+GET /api/v1/translation/{task_id}/review?page_index={page}
+```
+
+- Orijinal metin ve AI çevirisini yan yana gösterir
+- Sayfa ve blok bazında inceleme
+- Onaylama/reddetme/düzenleme seçenekleri
+
+**2. Çeviri Onaylama/Reddetme/Düzenleme**
+
+```
+POST /api/v1/translation/review
+```
+
+Request Body:
+
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "action": "approve|reject|edit",
+  "edited_text": "Düzenlenmiş metin" // action=edit için gerekli
+}
+```
+
+**3. Manuel Düzenleme**
+
+```
+POST /api/v1/translation/edit
+```
+
+Request Body:
+
+```json
+{
+  "task_id": "uuid",
+  "page_index": 0,
+  "block_index": 0,
+  "original_text": "Orijinal metin",
+  "translated_text": "Düzenlenmiş çeviri"
+}
+```
+
+#### Özellikler
+
+- ✅ **Yan Yana Görüntüleme**: Orijinal ve çeviri yan yana
+- ✅ **Blok Bazında Düzenleme**: Her metin bloğu ayrı ayrı düzenlenebilir
+- ✅ **Onaylama Sistemi**: Onaylanan çeviriler finalize edilir
+- ✅ **Re-processing**: Düzenlenen metinlerle resim yeniden işlenir
+
+#### Kullanım Senaryosu
+
+1. Kullanıcı çeviri başlatır
+2. Çeviri tamamlandığında review endpoint'ine gider
+3. Orijinal ve çeviriyi yan yana görür
+4. Hatalı çevirileri düzenler
+5. Onaylar ve finalize eder
+
+---
+
+### ☁️ **CDN Integration (S3/MinIO)**
+
+#### Genel Bakış
+
+İşlenmiş resimler CDN'e (S3/MinIO) yüklenir, disk kullanımı azalır ve hız artar.
+
+**Lokasyon:** `app/services/cdn_service.py`, `app/services/file_manager.py`
+
+#### CDNService
+
+**Desteklenen CDN'ler:**
+
+- **AWS S3**: Tam S3 desteği
+- **MinIO**: Self-hosted S3-compatible storage
+
+#### Özellikler
+
+- ✅ **Otomatik Upload**: Resimler CDN'e otomatik yüklenir
+- ✅ **Local Fallback**: CDN başarısız olursa local'e kaydedilir
+- ✅ **URL Generation**: CDN URL'leri otomatik oluşturulur
+- ✅ **Image Deletion**: CDN'den resim silme desteği
+- ✅ **Configurable**: `.env`'den açılıp kapatılabilir
+
+#### Config Ayarları
+
+```env
+# CDN Settings
+CDN_ENABLED=true
+CDN_TYPE=s3  # or "minio"
+
+# AWS S3
+AWS_ACCESS_KEY_ID=your-key
+AWS_SECRET_ACCESS_KEY=your-secret
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=webtoon-images
+
+# MinIO
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_SECURE=false
+MINIO_BUCKET_NAME=webtoon-images
+```
+
+#### Kullanım
+
+**FileManager** otomatik olarak CDN'e yükler:
+
+```python
+# FileManager.save_chapter() içinde otomatik
+if self.cdn_service.cdn_enabled:
+    cdn_url = self.cdn_service.upload_image(
+        image_bytes=page_bytes,
+        object_key=object_key,
+        content_type="image/webp"
+    )
+```
+
+#### Avantajlar
+
+- ✅ **Disk Tasarrufu**: Sunucu diskinde yer kaplamaz
+- ✅ **Hız**: CDN'den daha hızlı servis edilir
+- ✅ **Ölçeklenebilirlik**: Trafik artışında sorun olmaz
+- ✅ **Yedekleme**: CDN'de otomatik yedekleme
 
 ---
 
@@ -1834,6 +2560,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 🏷️ **Tag & Category Sistemi**
 
 #### WebtoonTag Enum
+
 - **200+ Tag**: Tüm webtoon tag'leri enum olarak tanımlanmış
 - **Kategoriler:**
   - **Genre Tags** (14): action, adventure, comedy, drama, fantasy, horror, mystery, romance, sci-fi, slice-of-life, sports, supernatural, thriller, western
@@ -1846,11 +2573,13 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
   - Ve daha fazlası...
 
 #### Tag Validation
+
 - Tag'ler enum'dan validate edilir
 - Geçersiz tag'ler otomatik atlanır
 - Tag isimleri normalize edilir (büyük/küçük harf, özel karakterler)
 
 #### Endpoint'ler
+
 - `GET /api/v1/tags` - Tüm tag'leri listele
 - `GET /api/v1/tags/validate?tag_names=comedy,action` - Tag'leri validate et
 
@@ -1859,9 +2588,11 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 📚 **Seri Yönetimi ve Otomatik Çeviri Akışı**
 
 #### SeriesManager Service
+
 **Lokasyon:** `app/services/series_manager.py`
 
 **Özellikler:**
+
 - `create_or_get_series()`: Seri bulma/oluşturma
   - Aynı isimde seri varsa: Mevcut seriyi kullanır (yeni oluşturmaz)
   - Aynı isimde seri yoksa: Yeni seri oluşturulur
@@ -1875,9 +2606,11 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
   - Aynı dil çifti yoksa: Yeni translation oluşturulur
 
 #### Otomatik Seri Oluşturma
+
 **Lokasyon:** `app/operations/translation_publisher.py`
 
 **Akış:**
+
 1. Çeviri tamamlandığında `publish_translation_on_completion()` çağrılır
 2. Seri kontrolü: Aynı isimde seri varsa kullanılır, yoksa oluşturulur
 3. Chapter kontrolü: Chapter number URL'den otomatik çıkarılır, çakışma yönetilir
@@ -1891,6 +2624,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 🔍 **Discovery Özellikleri**
 
 #### Yeni Endpoint'ler
+
 - `GET /api/v1/series/trending` - Trending seriler (günlük/haftalık/aylık)
 - `GET /api/v1/series/featured` - Öne çıkan seriler (admin-selected)
 - `GET /api/v1/series/recommendations` - Kullanıcıya özel öneriler
@@ -1900,6 +2634,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 - `GET /api/v1/tags/validate` - Tag validation
 
 **Özellikler:**
+
 - ✅ Redis cache desteği (TTL: 600-3600 saniye)
 - ✅ Kullanıcı bazlı öneriler (okuma geçmişi ve bookmark'lara göre)
 - ✅ Guest kullanıcılar için popüler seriler
@@ -1909,6 +2644,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 ### 🔧 **Admin Content Management**
 
 #### Yeni Endpoint'ler
+
 - `POST /api/v1/admin/chapters/upload` - Manuel bölüm yükleme
 - `PUT /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa düzenleme
 - `DELETE /api/v1/admin/chapters/{chapter_id}/pages/{page_number}` - Sayfa silme
@@ -1916,6 +2652,7 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 - `POST /api/v1/admin/series/{series_id}/chapters/bulk-publish` - Toplu yayınlama
 
 **Özellikler:**
+
 - ✅ Çeviri yaptırmadan direkt dosya yükleme
 - ✅ Sayfa seviyesinde düzenleme
 - ✅ Toplu işlemler
@@ -1930,4 +2667,3 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 3. ✅ **Veri Kaybı Önleme**: Chapter/translation çakışmalarında eski veriler korunur veya güvenli şekilde değiştirilir
 4. ✅ **Validation**: Tag'ler enum'dan validate edilir, geçersiz tag'ler atlanır
 5. ✅ **Seri Description Zorunluluğu**: Seri oluştururken description zorunludur
-

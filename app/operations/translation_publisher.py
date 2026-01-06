@@ -125,11 +125,22 @@ def publish_translation_on_completion(
         
         # Step 2: Save translation files
         pages_data = result.get("pages", [])
+        cleaned_pages_data = result.get("cleaned_pages", [])  # Get cleaned pages
+        
         if not pages_data:
             raise ValueError("No pages data in translation result")
         
         try:
             pages_bytes = [base64.b64decode(page) for page in pages_data]
+            
+            # Decode cleaned pages if available
+            cleaned_pages_bytes = []
+            if cleaned_pages_data:
+                cleaned_pages_bytes = [
+                    base64.b64decode(page) if page else None 
+                    for page in cleaned_pages_data
+                ]
+            
             metadata = {
                 "original_texts": result.get("original_texts", []),
                 "translated_texts": result.get("translated_texts", []),
@@ -146,7 +157,8 @@ def publish_translation_on_completion(
                 pages=pages_bytes,
                 metadata=metadata,
                 source_lang=source_lang,
-                target_lang=target_lang
+                target_lang=target_lang,
+                cleaned_pages=cleaned_pages_bytes  # Pass cleaned pages
             )
             
             if not storage_path:

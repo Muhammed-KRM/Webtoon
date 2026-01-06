@@ -29,7 +29,7 @@ class Series(Base):
     view_count = Column(Integer, default=0)
     rating = Column(Integer, default=0)  # Average rating
     rating_count = Column(Integer, default=0)
-    metadata = Column(JSON, nullable=True)  # Additional metadata
+    extra_data = Column(JSON, nullable=True)  # Additional metadata
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -53,7 +53,7 @@ class Chapter(Base):
     view_count = Column(Integer, default=0)
     is_published = Column(Boolean, default=False)
     published_at = Column(DateTime(timezone=True), nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

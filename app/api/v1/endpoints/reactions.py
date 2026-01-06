@@ -232,12 +232,11 @@ def get_reactions(
                     "value": reaction.reaction_value
                 }
         
-        return BaseResponse.success_response(
-            {
-                "reactions": list(reaction_counts.values()),
-                "total": len(reactions),
-                "user_reaction": user_reaction
-            }
+        response_data = {
+            "reactions": list(reaction_counts.values()),
+            "total": len(reactions),
+            "user_reaction": user_reaction
+        }
         
         # Cache result
         api_cache.set_cached_response(
