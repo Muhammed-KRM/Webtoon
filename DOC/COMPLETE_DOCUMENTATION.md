@@ -2,101 +2,135 @@
 
 ## 📦 **KURULUM REHBERİ**
 
-### Hızlı Başlangıç
+### 🚀 Hızlı Başlangıç (Yeni Sistem - 2026)
 
-1. **İlk Kurulum:**
+#### Yeni Bilgisayarda İlk Kurulum
 
-   ```bash
-   SETUP.bat
-   ```
+**Adım 1: Gerekli Programları Kurun**
 
-   Bu komut:
+1. **Python 3.10+**: https://www.python.org/downloads/
 
-   - ✅ Python virtual environment oluşturur
-   - ✅ Tüm temel paketleri kurar
-   - ✅ Opsiyonel paketleri kurar (Hugging Face, Argos, spaCy)
-   - ✅ spaCy modellerini indirir
-   - ✅ Gerekli klasörleri oluşturur
-   - ✅ .env dosyasını hazırlar
+   - ⚠️ Kurulum sırasında "Add Python to PATH" seçeneğini işaretleyin!
 
-2. **Sadece Opsiyonel Paketler:**
+2. **Docker Desktop**: https://www.docker.com/products/docker-desktop/
 
-   ```bash
-   INSTALL_OPTIONAL.bat
-   ```
+   - Kurulum sonrası bilgisayarı yeniden başlatın
 
-   Eğer temel kurulum yapıldıysa ve sadece opsiyonel paketleri eklemek istiyorsanız.
+3. **Git** (opsiyonel): https://git-scm.com/download/win
 
-3. **Projeyi Başlatma:**
-   ```bash
-   START.bat
-   ```
-   Bu komut:
-   - ✅ Redis'i başlatır (Docker ile)
-   - ✅ Celery Worker'ı başlatır
-   - ✅ FastAPI'yi başlatır
-   - ✅ Tarayıcıda API dokümantasyonunu açar
+**Adım 2: Otomatik Kurulum**
 
-### Kurulacak Paketler
+```bash
+# İnteraktif kurulum (Önerilen - Yeni kullanıcılar için)
+KURULUM_SIHIRBAZI.bat
 
-#### Zorunlu Paketler
+# VEYA
 
-- **FastAPI**: Web framework
-- **Celery**: Task queue
+# Hızlı otomatik kurulum (Deneyimli kullanıcılar için)
+SETUP_COMPLETE.bat
+```
+
+Bu script'ler otomatik olarak:
+
+- ✅ Virtual environment oluşturur
+- ✅ Tüm Python paketlerini kurar
+- ✅ Veritabanını oluşturur
+- ✅ .env dosyasını yapılandırır
+- ✅ Redis container'ını başlatır
+
+**Adım 3: Sistemi Başlatın**
+
+```bash
+START_ALL.bat
+```
+
+Bu komut:
+
+- ✅ Redis'i kontrol eder ve başlatır
+- ✅ Web Server'ı başlatır (Port 8000)
+- ✅ Celery Worker'ı başlatır
+- ✅ Tarayıcıda API dokümantasyonunu açar
+
+**Adım 4: Sistemi Test Edin**
+
+Tarayıcınızda: http://localhost:8000/docs
+
+---
+
+### 📋 Kurulum Dosyaları
+
+| Dosya                   | Amaç               | Kullanım                   |
+| ----------------------- | ------------------ | -------------------------- |
+| `KURULUM_SIHIRBAZI.bat` | İnteraktif kurulum | İlk kez kuruyorsanız       |
+| `SETUP_COMPLETE.bat`    | Otomatik kurulum   | Hızlı kurulum istiyorsanız |
+| `START_ALL.bat`         | Sistemi başlat     | Günlük kullanım            |
+| `STOP_ALL.bat`          | Sistemi durdur     | Sistemi kapatırken         |
+
+**Detaylı kurulum için:**
+
+- `ADIM_ADIM_KURULUM.md` - Görsel adım adım rehber
+- `KURULUM_DOKUMANI.md` - Kapsamlı kurulum dokümantasyonu
+- `DOSYALAR_REHBERI.md` - Dosyalar hakkında bilgi
+
+---
+
+### 🔧 Kurulacak Paketler
+
+#### Zorunlu Paketler (Otomatik Kurulur)
+
+- **FastAPI**: Modern web framework
+- **Celery**: Arka plan görev kuyruğu
 - **Redis**: Cache ve message broker
-- **SQLAlchemy**: ORM
-- **OpenAI**: AI çeviri
-- **EasyOCR**: OCR engine
+- **SQLAlchemy**: ORM (Object-Relational Mapping)
+- **OpenAI**: AI destekli çeviri
+- **EasyOCR**: Optik karakter tanıma
 - **OpenCV + Pillow**: Görüntü işleme
 - **httpx + BeautifulSoup**: Web scraping
+- **Deep Translator**: Ücretsiz çeviri servisi
 
-#### Opsiyonel Paketler (Otomatik Kurulur)
+#### Opsiyonel Paketler (Manuel Kurulum)
 
-- **Hugging Face Transformers** (`transformers==4.36.2` + `torch==2.1.2`)
-  - Offline AI çevirisi için
-  - ~2GB disk alanı (ilk kullanımda model indirilir)
-- **Argos Translate** (`argostranslate==1.9.0`)
-  - Offline ücretsiz çeviri için
-  - ~200-500MB disk alanı (dil çiftine göre)
-- **spaCy** (`spacy==3.7.2` + `en_core_web_sm` model)
-  - Gelişmiş özel isim tespiti (NER) için
-  - ~50-100MB disk alanı
+```bash
+# Argos Translate (Offline ücretsiz çeviri)
+pip install argostranslate
 
-### Sistem Gereksinimleri
+# Hugging Face Transformers (Offline AI çeviri)
+pip install transformers torch
+
+# spaCy (Gelişmiş NER)
+pip install spacy
+python -m spacy download en_core_web_sm
+```
+
+---
+
+### 💻 Sistem Gereksinimleri
 
 - **Python**: 3.10 veya üzeri
 - **RAM**: Minimum 4GB (8GB önerilir)
 - **Disk**: Minimum 5GB boş alan
-- **Docker**: Redis için (opsiyonel, Memurai da kullanılabilir)
+- **Docker**: Redis için gerekli
+- **İşletim Sistemi**: Windows 10/11, Linux, macOS
 
-### .env Dosyası Yapılandırması
+---
 
-`SETUP.bat` çalıştırıldığında `.env.example` dosyasından `.env` oluşturulur. Düzenlemeniz gerekenler:
+### 🔐 .env Dosyası Yapılandırması
+
+`SETUP_COMPLETE.bat` otomatik olarak `.env` dosyası oluşturur.
+
+**Varsayılan Ayarlar (Geliştirme):**
 
 ```env
-SECRET_KEY=your-secret-key-here-min-32-chars
-DATABASE_URL=postgresql://user:pass@localhost/webtoon_db
-# veya SQLite için:
-# DATABASE_URL=sqlite:///./webtoon.db
+SECRET_KEY=development_secret_key_change_in_production_32chars
+DATABASE_URL=sqlite:///./webtoon.db
 OPENAI_API_KEY=sk-your-openai-api-key-here
 REDIS_URL=redis://localhost:6379/0
+CDN_ENABLED=False
+STRIPE_SECRET_KEY=sk_test_your-stripe-key-here
+LOG_LEVEL=INFO
+ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:8000"]
+```
 
-# CDN Settings (Opsiyonel)
-CDN_ENABLED=false
-CDN_TYPE=s3  # or "minio"
-
-# AWS S3 (CDN_TYPE=s3 için)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_REGION=us-east-1
-S3_BUCKET_NAME=
-
-# MinIO (CDN_TYPE=minio için)
-MINIO_ENDPOINT=localhost:9000
-MINIO_ACCESS_KEY=
-MINIO_SECRET_KEY=
-MINIO_SECURE=false
-MINIO_BUCKET_NAME=webtoon-images
 ```
 
 Detaylı rehber: `DOC/API_KEY_REHBERI.md`
@@ -352,385 +386,387 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
 ## 📁 **NİHAİ TAM DOSYA YAPISI**
 
 ```
+
 webtoon-ai-translator/
 │
-├── 📄 main.py                          # FastAPI uygulama giriş noktası
-├── 📄 requirements.txt                 # Python bağımlılıkları
-├── 📄 alembic.ini                      # Alembic konfigürasyonu
-├── 📄 .env.example                     # Environment variables örneği
-├── 📄 .gitignore                       # Git ignore kuralları
+├── 📄 main.py # FastAPI uygulama giriş noktası
+├── 📄 requirements.txt # Python bağımlılıkları
+├── 📄 alembic.ini # Alembic konfigürasyonu
+├── 📄 .env.example # Environment variables örneği
+├── 📄 .gitignore # Git ignore kuralları
 │
-├── 📁 alembic/                         # Database migrations
-│   ├── env.py                          # Alembic environment
-│   ├── script.py.mako                  # Migration template
-│   └── versions/                       # Migration dosyaları
+├── 📁 alembic/ # Database migrations
+│ ├── env.py # Alembic environment
+│ ├── script.py.mako # Migration template
+│ └── versions/ # Migration dosyaları
 │
-├── 📁 app/                             # Ana uygulama klasörü
-│   │
-│   ├── 📁 api/                         # API katmanı
-│   │   └── 📁 v1/                      # API v1
-│   │       ├── router.py               # Tüm endpoint'leri toplayan router
-│   │       └── 📁 endpoints/           # Endpoint dosyaları
-│   │           ├── auth.py              # Authentication endpoints
-│   │           ├── translate.py         # Çeviri endpoints
-│   │           ├── jobs.py              # Job history endpoints
-│   │           ├── files.py             # File serving endpoints
-│   │           ├── admin.py             # Admin endpoints
-│   │           ├── admin_content.py     # Admin content management (manual upload, page edit)
-│   │           ├── metrics.py           # Metrics endpoints
-│   │           ├── users.py             # User management endpoints
-│   │           ├── series.py            # Series management endpoints
-│   │           ├── comments.py         # Comment endpoints
-│   │           ├── reactions.py        # Reaction endpoints
-│   │           ├── subscription.py     # Subscription endpoints
-│   │           ├── payments.py         # Payment endpoints
-│   │           ├── site_settings.py    # Site settings endpoints
-│   │           ├── reading.py          # Reading history/bookmarks/ratings
-│   │           ├── notifications.py    # Notification endpoints
-│   │           ├── public.py           # Public (no auth) endpoints
-│   │           ├── discovery.py        # Discovery endpoints (trending, featured, recommendations)
-│   │           ├── cache.py            # Cache management endpoints
-│   │           ├── logs.py             # Log viewing endpoints
-│   │           └── translation_editor.py # Human-in-the-Loop editor endpoints
-│   │
-│   ├── 📁 core/                        # Çekirdek modüller (14 dosya)
-│   │   ├── config.py                    # Uygulama ayarları
-│   │   │                                 # - Settings class (Pydantic)
-│   │   │                                 # - Environment variables
-│   │   │                                 # - Default values
-│   │   │
-│   │   ├── database.py                 # Database connection
-│   │   │                                 # - SQLAlchemy engine
-│   │   │                                 # - SessionLocal factory
-│   │   │                                 # - get_db() dependency
-│   │   │
-│   │   ├── security.py                 # JWT, password hashing
-│   │   │                                 # - create_access_token()
-│   │   │                                 # - verify_password()
-│   │   │                                 # - get_current_user()
-│   │   │                                 # - require_admin()
-│   │   │                                 # - get_current_user_optional()
-│   │   │
-│   │   ├── exceptions.py               # Custom exceptions
-│   │   │                                 # - global_exception_handler
-│   │   │                                 # - validation_exception_handler
-│   │   │                                 # - database_exception_handler
-│   │   │
-│   │   ├── middleware.py               # Request/response middleware
-│   │   │                                 # - RequestIDMiddleware
-│   │   │                                 # - LoggingMiddleware
-│   │   │                                 # - SecurityHeadersMiddleware
-│   │   │
-│   │   ├── metrics.py                   # Metrics collection
-│   │   │                                 # - MetricsCollector class
-│   │   │                                 # - increment_counter()
-│   │   │                                 # - record_timing()
-│   │   │
-│   │   ├── rate_limit.py                # Rate limiting
-│   │   │                                 # - @rate_limit decorator
-│   │   │                                 # - Redis-based limiting
-│   │   │
-│   │   ├── retry.py                     # Retry decorators
-│   │   │                                 # - @retry (async)
-│   │   │                                 # - @retry_sync
-│   │   │
-│   │   ├── circuit_breaker.py          # Circuit breaker pattern
-│   │   │                                 # - CircuitBreaker class
-│   │   │                                 # - Failure threshold
-│   │   │
-│   │   ├── compression.py              # Gzip compression
-│   │   │                                 # - CompressionMiddleware
-│   │   │                                 # - Response compression
-│   │   │
-│   │   ├── query_optimizer.py          # Query optimization
-│   │   │                                 # - Eager loading utilities
-│   │   │                                 # - N+1 query prevention
-│   │   │
-│   │   ├── cache_invalidation.py       # Cache invalidation
-│   │   │                                 # - CacheInvalidation class
-│   │   │                                 # - Invalidate methods
-│   │   │
-│   │   ├── stale_while_revalidate.py   # SWR pattern
-│   │   │                                 # - Stale-while-revalidate cache
-│   │   │
-│   │   ├── cache_decorator.py           # Cache decorator
-│   │   │                                 # - @cache_response decorator
-│   │   │
-│   │   └── response.py                  # Base response model
-│   │                                     # - BaseResponse<T> generic
-│   │                                     # - success_response()
-│   │                                     # - error_response()
-│   │
-│   ├── 📁 db/                          # Database modülleri
-│   │   ├── base.py                     # SQLAlchemy base
-│   │   └── session.py                   # Database session factory
-│   │
-│   ├── 📁 models/                      # Database modelleri
-│   │   ├── user.py                      # User model
-│   │   ├── job.py                       # TranslationJob model
-│   │   ├── series.py                    # Series, Chapter, ChapterTranslation
-│   │   ├── comment.py                   # Comment model
-│   │   ├── comment_like.py              # CommentLike model
-│   │   ├── reaction.py                  # Reaction model
-│   │   ├── subscription.py              # Subscription, Payment models
-│   │   ├── site_settings.py             # SiteSettings model
-│   │   ├── reading.py                   # ReadingHistory, Bookmark, Rating, Notification
-│   │   ├── log.py                       # Log model
-│   │   ├── scraper_config.py           # ScraperConfig model (dynamic CSS selectors)
-│   │   └── __init__.py                  # Model exports
-│   │
-│   ├── 📁 schemas/                     # Pydantic schemas (9 dosya)
-│   │   ├── base_response.py             # BaseResponse model
-│   │   │                                 # - Generic BaseResponse<T>
-│   │   │                                 # - success/error helpers
-│   │   │
-│   │   ├── auth.py                      # Auth schemas
-│   │   │                                 # - UserRegister
-│   │   │                                 # - UserLogin
-│   │   │                                 # - Token, UserResponse
-│   │   │
-│   │   ├── translation.py               # Translation schemas
-│   │   │                                 # - TranslationRequest
-│   │   │                                 # - JobStatusResponse
-│   │   │                                 # - ChapterResponse
-│   │   │
-│   │   ├── batch_translation.py         # Batch translation schemas
-│   │   │                                 # - BatchTranslationRequest
-│   │   │                                 # - ChapterRangeRequest
-│   │   │                                 # - BatchTranslationResponse
-│   │   │
-│   │   ├── series.py                    # Series schemas
-│   │   │                                 # - SeriesCreate, SeriesUpdate
-│   │   │                                 # - SeriesResponse
-│   │   │                                 # - ChapterResponse
-│   │   │                                 # - ChapterTranslationResponse
-│   │   │
-│   │   ├── comment.py                   # Comment schemas
-│   │   │                                 # - CommentCreate, CommentUpdate
-│   │   │                                 # - CommentResponse (with replies)
-│   │   │
-│   │   ├── reaction.py                  # Reaction schemas
-│   │   │                                 # - ReactionCreate
-│   │   │                                 # - ReactionResponse
-│   │   │                                 # - ReactionSummary
-│   │   │
-│   │   ├── subscription.py              # Subscription schemas
-│   │   │                                 # - SubscriptionResponse
-│   │   │                                 # - PaymentRequest, PaymentResponse
-│   │   │
-│   │   ├── site_settings.py             # Site settings schemas
-│   │   │                                 # - SiteSettingsResponse
-│   │   │                                 # - SiteSettingsUpdate
-│   │   │
-│   │   └── __init__.py                  # Schema exports
-│   │
-│   ├── 📁 services/                    # Servis katmanı (14 dosya)
-│   │   ├── scraper_service.py           # Web scraping orchestrator
-│   │   │                                 # - Site detection
-│   │   │                                 # - Scraper selection
-│   │   │                                 # - fetch_chapter_images()
-│   │   │
-│   │   ├── scrapers/                    # Site-specific scrapers (3 dosya)
-│   │   │   ├── base_scraper.py          # Base scraper interface
-│   │   │   │                             # - Abstract base class
-│   │   │   │                             # - Common HTTP client
-│   │   │   │
-│   │   │   ├── webtoons_scraper.py      # Webtoons.com scraper
-│   │   │   │                             # - API endpoint detection
-│   │   │   │                             # - HTML parsing
-│   │   │   │                             # - JavaScript variable extraction
-│   │   │   │
-│   │   │   └── asura_scraper.py         # AsuraScans scraper
-│   │   │                                 # - Reader container detection
-│   │   │                                 # - Image URL extraction
-│   │   │
-│   │   ├── scraper_config_service.py   # Dynamic scraper configuration
-│   │   │                                 # - CSS selector management
-│   │   │                                 # - Database-based config
-│   │   │                                 # - Default selector fallback
-│   │   │                                 # - Admin config updates
-│   │   │
-│   │   ├── ocr_service.py               # OCR (EasyOCR)
-│   │   │                                 # - EasyOCR reader initialization
-│   │   │                                 # - Text detection
-│   │   │                                 # - Bounding box extraction
-│   │   │                                 # - GPU support (optional)
-│   │   │                                 # - Async wrapper (run_in_executor)
-│   │   │                                 # - Event loop blocking prevention
-│   │   │
-│   │   ├── ai_translator.py             # OpenAI translation
-│   │   │                                 # - GPT-4o-mini integration
-│   │   │                                 # - Context-aware translation
-│   │   │                                 # - Cached Input support
-│   │   │                                 # - Batch translation
-│   │   │                                 # - Glossary system integration
-│   │   │                                 # - Smart chunking (token limit management)
-│   │   │
-│   │   ├── image_processor.py           # Image processing (OpenCV, Pillow)
-│   │   │                                 # - In-painting (text removal)
-│   │   │                                 # - Text rendering
-│   │   │                                 # - Dynamic font sizing
-│   │   │                                 # - Multi-line text support
-│   │   │                                 # - Text wrapping (textwrap)
-│   │   │                                 # - WebP format support (~50% smaller)
-│   │   │                                 # - Async wrapper (run_in_executor)
-│   │   │                                 # - Event loop blocking prevention
-│   │   │
-│   │   ├── file_manager.py              # File organization
-│   │   │                                 # - Folder structure creation
-│   │   │                                 # - Chapter/page naming
-│   │   │                                 # - Metadata saving
-│   │   │                                 # - CDN integration (S3/MinIO)
-│   │   │                                 # - Automatic CDN upload
-│   │   │                                 # - Local fallback
-│   │   │
-│   │   ├── cache_service.py             # Redis caching
-│   │   │                                 # - Translation result caching
-│   │   │                                 # - Cache key generation
-│   │   │                                 # - TTL management
-│   │   │                                 # - Translation lock mechanism
-│   │   │                                 # - Duplicate prevention
-│   │   │
-│   │   ├── api_cache.py                 # API response caching
-│   │   │                                 # - Endpoint response caching
-│   │   │                                 # - Cache key hashing
-│   │   │                                 # - Invalidation utilities
-│   │   │
-│   │   ├── db_logger.py                 # Database logging
-│   │   │                                 # - Background log writer thread
-│   │   │                                 # - Log queue management
-│   │   │                                 # - Database log storage
-│   │   │
-│   │   ├── notification_service.py      # Notification service
-│   │   │                                 # - Create notifications
-│   │   │                                 # - Translation completed
-│   │   │                                 # - New chapter
-│   │   │                                 # - Comment reply
-│   │   │
-│   │   ├── payment_service.py           # Stripe payment service
-│   │   │                                 # - Payment intent creation
-│   │   │                                 # - Payment confirmation
-│   │   │                                 # - Webhook handling
-│   │   │
-│   │   ├── language_detector.py         # Language detection
-│   │   │                                 # - URL-based detection
-│   │   │                                 # - Language validation
-│   │   │                                 # - ISO 639-1 support
-│   │   │
-│   │   └── url_generator.py             # URL generation utilities
-│   │                                     # - Chapter range parsing
-│   │                                     # - URL pattern detection
-│   │                                     # - Chapter URL generation
-│   │
-│   ├── 📁 operations/                  # İş akışı yönetimi (3 dosya)
-│   │   ├── translation_manager.py       # Translation pipeline (Celery task)
-│   │   │                                 # - @celery_app.task decorator
-│   │   │                                 # - process_chapter_task()
-│   │   │                                 # - Full pipeline orchestration
-│   │   │                                 # - Progress tracking
-│   │   │                                 # - Error handling
-│   │   │
-│   │   ├── batch_translation_manager.py  # Batch translation
-│   │   │                                 # - batch_translation_task()
-│   │   │                                 # - Multiple chapter processing
-│   │   │                                 # - Sequential execution
-│   │   │
-│   │   └── translation_publisher.py     # Auto-publish translations (geliştirilmiş hata yönetimi)
-│   │                                     # - publish_translation_on_completion()
-│   │                                     # - ChapterTranslation creation
-│   │                                     # - Automatic publishing
-│   │                                     # - Transaction rollback ve dosya temizleme
-│   │
-│   └── 📁 __init__.py
+├── 📁 app/ # Ana uygulama klasörü
+│ │
+│ ├── 📁 api/ # API katmanı
+│ │ └── 📁 v1/ # API v1
+│ │ ├── router.py # Tüm endpoint'leri toplayan router
+│ │ └── 📁 endpoints/ # Endpoint dosyaları
+│ │ ├── auth.py # Authentication endpoints
+│ │ ├── translate.py # Çeviri endpoints
+│ │ ├── jobs.py # Job history endpoints
+│ │ ├── files.py # File serving endpoints
+│ │ ├── admin.py # Admin endpoints
+│ │ ├── admin*content.py # Admin content management (manual upload, page edit)
+│ │ ├── metrics.py # Metrics endpoints
+│ │ ├── users.py # User management endpoints
+│ │ ├── series.py # Series management endpoints
+│ │ ├── comments.py # Comment endpoints
+│ │ ├── reactions.py # Reaction endpoints
+│ │ ├── subscription.py # Subscription endpoints
+│ │ ├── payments.py # Payment endpoints
+│ │ ├── site_settings.py # Site settings endpoints
+│ │ ├── reading.py # Reading history/bookmarks/ratings
+│ │ ├── notifications.py # Notification endpoints
+│ │ ├── public.py # Public (no auth) endpoints
+│ │ ├── discovery.py # Discovery endpoints (trending, featured, recommendations)
+│ │ ├── cache.py # Cache management endpoints
+│ │ ├── logs.py # Log viewing endpoints
+│ │ └── translation_editor.py # Human-in-the-Loop editor endpoints
+│ │
+│ ├── 📁 core/ # Çekirdek modüller (14 dosya)
+│ │ ├── config.py # Uygulama ayarları
+│ │ │ # - Settings class (Pydantic)
+│ │ │ # - Environment variables
+│ │ │ # - Default values
+│ │ │
+│ │ ├── database.py # Database connection
+│ │ │ # - SQLAlchemy engine
+│ │ │ # - SessionLocal factory
+│ │ │ # - get_db() dependency
+│ │ │
+│ │ ├── security.py # JWT, password hashing
+│ │ │ # - create_access_token()
+│ │ │ # - verify_password()
+│ │ │ # - get_current_user()
+│ │ │ # - require_admin()
+│ │ │ # - get_current_user_optional()
+│ │ │
+│ │ ├── exceptions.py # Custom exceptions
+│ │ │ # - global_exception_handler
+│ │ │ # - validation_exception_handler
+│ │ │ # - database_exception_handler
+│ │ │
+│ │ ├── middleware.py # Request/response middleware
+│ │ │ # - RequestIDMiddleware
+│ │ │ # - LoggingMiddleware
+│ │ │ # - SecurityHeadersMiddleware
+│ │ │
+│ │ ├── metrics.py # Metrics collection
+│ │ │ # - MetricsCollector class
+│ │ │ # - increment_counter()
+│ │ │ # - record_timing()
+│ │ │
+│ │ ├── rate_limit.py # Rate limiting
+│ │ │ # - @rate_limit decorator
+│ │ │ # - Redis-based limiting
+│ │ │
+│ │ ├── retry.py # Retry decorators
+│ │ │ # - @retry (async)
+│ │ │ # - @retry_sync
+│ │ │
+│ │ ├── circuit_breaker.py # Circuit breaker pattern
+│ │ │ # - CircuitBreaker class
+│ │ │ # - Failure threshold
+│ │ │
+│ │ ├── compression.py # Gzip compression
+│ │ │ # - CompressionMiddleware
+│ │ │ # - Response compression
+│ │ │
+│ │ ├── query_optimizer.py # Query optimization
+│ │ │ # - Eager loading utilities
+│ │ │ # - N+1 query prevention
+│ │ │
+│ │ ├── cache_invalidation.py # Cache invalidation
+│ │ │ # - CacheInvalidation class
+│ │ │ # - Invalidate methods
+│ │ │
+│ │ ├── stale_while_revalidate.py # SWR pattern
+│ │ │ # - Stale-while-revalidate cache
+│ │ │
+│ │ ├── cache_decorator.py # Cache decorator
+│ │ │ # - @cache_response decorator
+│ │ │
+│ │ └── response.py # Base response model
+│ │ # - BaseResponse<T> generic
+│ │ # - success_response()
+│ │ # - error_response()
+│ │
+│ ├── 📁 db/ # Database modülleri
+│ │ ├── base.py # SQLAlchemy base
+│ │ └── session.py # Database session factory
+│ │
+│ ├── 📁 models/ # Database modelleri
+│ │ ├── user.py # User model
+│ │ ├── job.py # TranslationJob model
+│ │ ├── series.py # Series, Chapter, ChapterTranslation
+│ │ ├── comment.py # Comment model
+│ │ ├── comment_like.py # CommentLike model
+│ │ ├── reaction.py # Reaction model
+│ │ ├── subscription.py # Subscription, Payment models
+│ │ ├── site_settings.py # SiteSettings model
+│ │ ├── reading.py # ReadingHistory, Bookmark, Rating, Notification
+│ │ ├── log.py # Log model
+│ │ ├── scraper_config.py # ScraperConfig model (dynamic CSS selectors)
+│ │ └── **init**.py # Model exports
+│ │
+│ ├── 📁 schemas/ # Pydantic schemas (9 dosya)
+│ │ ├── base_response.py # BaseResponse model
+│ │ │ # - Generic BaseResponse<T>
+│ │ │ # - success/error helpers
+│ │ │
+│ │ ├── auth.py # Auth schemas
+│ │ │ # - UserRegister
+│ │ │ # - UserLogin
+│ │ │ # - Token, UserResponse
+│ │ │
+│ │ ├── translation.py # Translation schemas
+│ │ │ # - TranslationRequest
+│ │ │ # - JobStatusResponse
+│ │ │ # - ChapterResponse
+│ │ │
+│ │ ├── batch_translation.py # Batch translation schemas
+│ │ │ # - BatchTranslationRequest
+│ │ │ # - ChapterRangeRequest
+│ │ │ # - BatchTranslationResponse
+│ │ │
+│ │ ├── series.py # Series schemas
+│ │ │ # - SeriesCreate, SeriesUpdate
+│ │ │ # - SeriesResponse
+│ │ │ # - ChapterResponse
+│ │ │ # - ChapterTranslationResponse
+│ │ │
+│ │ ├── comment.py # Comment schemas
+│ │ │ # - CommentCreate, CommentUpdate
+│ │ │ # - CommentResponse (with replies)
+│ │ │
+│ │ ├── reaction.py # Reaction schemas
+│ │ │ # - ReactionCreate
+│ │ │ # - ReactionResponse
+│ │ │ # - ReactionSummary
+│ │ │
+│ │ ├── subscription.py # Subscription schemas
+│ │ │ # - SubscriptionResponse
+│ │ │ # - PaymentRequest, PaymentResponse
+│ │ │
+│ │ ├── site_settings.py # Site settings schemas
+│ │ │ # - SiteSettingsResponse
+│ │ │ # - SiteSettingsUpdate
+│ │ │
+│ │ └── **init**.py # Schema exports
+│ │
+│ ├── 📁 services/ # Servis katmanı (14 dosya)
+│ │ ├── scraper_service.py # Web scraping orchestrator
+│ │ │ # - Site detection
+│ │ │ # - Scraper selection
+│ │ │ # - fetch_chapter_images()
+│ │ │
+│ │ ├── scrapers/ # Site-specific scrapers (3 dosya)
+│ │ │ ├── base_scraper.py # Base scraper interface
+│ │ │ │ # - Abstract base class
+│ │ │ │ # - Common HTTP client
+│ │ │ │
+│ │ │ ├── webtoons_scraper.py # Webtoons.com scraper
+│ │ │ │ # - API endpoint detection
+│ │ │ │ # - HTML parsing
+│ │ │ │ # - JavaScript variable extraction
+│ │ │ │
+│ │ │ └── asura_scraper.py # AsuraScans scraper
+│ │ │ # - Reader container detection
+│ │ │ # - Image URL extraction
+│ │ │
+│ │ ├── scraper_config_service.py # Dynamic scraper configuration
+│ │ │ # - CSS selector management
+│ │ │ # - Database-based config
+│ │ │ # - Default selector fallback
+│ │ │ # - Admin config updates
+│ │ │
+│ │ ├── ocr_service.py # OCR (EasyOCR)
+│ │ │ # - EasyOCR reader initialization
+│ │ │ # - Text detection
+│ │ │ # - Bounding box extraction
+│ │ │ # - GPU support (optional)
+│ │ │ # - Async wrapper (run_in_executor)
+│ │ │ # - Event loop blocking prevention
+│ │ │
+│ │ ├── ai_translator.py # OpenAI translation
+│ │ │ # - GPT-4o-mini integration
+│ │ │ # - Context-aware translation
+│ │ │ # - Cached Input support
+│ │ │ # - Batch translation
+│ │ │ # - Glossary system integration
+│ │ │ # - Smart chunking (token limit management)
+│ │ │
+│ │ ├── image_processor.py # Image processing (OpenCV, Pillow)
+│ │ │ # - In-painting (text removal)
+│ │ │ # - Text rendering
+│ │ │ # - Dynamic font sizing
+│ │ │ # - Multi-line text support
+│ │ │ # - Text wrapping (textwrap)
+│ │ │ # - WebP format support (~50% smaller)
+│ │ │ # - Async wrapper (run_in_executor)
+│ │ │ # - Event loop blocking prevention
+│ │ │
+│ │ ├── file_manager.py # File organization
+│ │ │ # - Folder structure creation
+│ │ │ # - Chapter/page naming
+│ │ │ # - Metadata saving
+│ │ │ # - CDN integration (S3/MinIO)
+│ │ │ # - Automatic CDN upload
+│ │ │ # - Local fallback
+│ │ │
+│ │ ├── cache_service.py # Redis caching
+│ │ │ # - Translation result caching
+│ │ │ # - Cache key generation
+│ │ │ # - TTL management
+│ │ │ # - Translation lock mechanism
+│ │ │ # - Duplicate prevention
+│ │ │
+│ │ ├── api_cache.py # API response caching
+│ │ │ # - Endpoint response caching
+│ │ │ # - Cache key hashing
+│ │ │ # - Invalidation utilities
+│ │ │
+│ │ ├── db_logger.py # Database logging
+│ │ │ # - Background log writer thread
+│ │ │ # - Log queue management
+│ │ │ # - Database log storage
+│ │ │
+│ │ ├── notification_service.py # Notification service
+│ │ │ # - Create notifications
+│ │ │ # - Translation completed
+│ │ │ # - New chapter
+│ │ │ # - Comment reply
+│ │ │
+│ │ ├── payment_service.py # Stripe payment service
+│ │ │ # - Payment intent creation
+│ │ │ # - Payment confirmation
+│ │ │ # - Webhook handling
+│ │ │
+│ │ ├── language_detector.py # Language detection
+│ │ │ # - URL-based detection
+│ │ │ # - Language validation
+│ │ │ # - ISO 639-1 support
+│ │ │
+│ │ └── url_generator.py # URL generation utilities
+│ │ # - Chapter range parsing
+│ │ # - URL pattern detection
+│ │ # - Chapter URL generation
+│ │
+│ ├── 📁 operations/ # İş akışı yönetimi (3 dosya)
+│ │ ├── translation_manager.py # Translation pipeline (Celery task)
+│ │ │ # - @celery_app.task decorator
+│ │ │ # - process_chapter_task()
+│ │ │ # - Full pipeline orchestration
+│ │ │ # - Progress tracking
+│ │ │ # - Error handling
+│ │ │
+│ │ ├── batch_translation_manager.py # Batch translation
+│ │ │ # - batch_translation_task()
+│ │ │ # - Multiple chapter processing
+│ │ │ # - Sequential execution
+│ │ │
+│ │ └── translation_publisher.py # Auto-publish translations (geliştirilmiş hata yönetimi)
+│ │ # - publish_translation_on_completion()
+│ │ # - ChapterTranslation creation
+│ │ # - Automatic publishing
+│ │ # - Transaction rollback ve dosya temizleme
+│ │
+│ └── 📁 **init**.py
 │
-├── 📁 DOC/                             # Dokümantasyon
-│   ├── COMPLETE_DOCUMENTATION.md        # Bu dosya
-│   ├── API_KEY_REHBERI.md              # API key rehberi
-│   ├── BACKEND_REVIEW.md                # Backend inceleme
-│   ├── CACHE_STRATEGY.md                # Cache stratejisi
-│   ├── COMPLETE_CACHE_INVALIDATION.md   # Cache invalidation
-│   ├── COMPLETE_ENDPOINTS.md            # Endpoint listesi
-│   ├── COMPLETE_IMPLEMENTATION.md       # Implementation detayları
-│   ├── PERFORMANCE_OPTIMIZATIONS.md    # Performans optimizasyonları
-│   ├── SPEED_OPTIMIZATIONS.md           # Hız optimizasyonları
-│   └── ... (diğer dokümantasyon dosyaları)
+├── 📁 DOC/ # Dokümantasyon
+│ ├── COMPLETE_DOCUMENTATION.md # Bu dosya
+│ ├── API_KEY_REHBERI.md # API key rehberi
+│ ├── BACKEND_REVIEW.md # Backend inceleme
+│ ├── CACHE_STRATEGY.md # Cache stratejisi
+│ ├── COMPLETE_CACHE_INVALIDATION.md # Cache invalidation
+│ ├── COMPLETE_ENDPOINTS.md # Endpoint listesi
+│ ├── COMPLETE_IMPLEMENTATION.md # Implementation detayları
+│ ├── PERFORMANCE_OPTIMIZATIONS.md # Performans optimizasyonları
+│ ├── SPEED_OPTIMIZATIONS.md # Hız optimizasyonları
+│ └── ... (diğer dokümantasyon dosyaları)
 │
-├── 📁 storage/                         # Çevrilmiş görseller (gitignore)
-│   └── {series_name}/                  # Seri klasörleri
-│       └── {source_lang}_to_{target_lang}/
-│           └── chapter_{number:04d}/
-│               ├── page_001.jpg
-│               ├── page_002.jpg
-│               ├── cleaned/            # Temizlenmiş (yazısız) resimler (Editör için)
-│               │   ├── page_001.jpg
-│               │   └── ...
-│               └── metadata.json
+├── 📁 storage/ # Çevrilmiş görseller (gitignore)
+│ └── {series_name}/ # Seri klasörleri
+│ └── {source_lang}\_to*{target*lang}/
+│ └── chapter*{number:04d}/
+│ ├── page_001.jpg
+│ ├── page_002.jpg
+│ ├── cleaned/ # Temizlenmiş (yazısız) resimler (Editör için)
+│ │ ├── page_001.jpg
+│ │ └── ...
+│ └── metadata.json
 │
-├── 📁 cache/                           # Cache dosyaları (gitignore)
+├── 📁 cache/ # Cache dosyaları (gitignore)
 │
-├── 📁 fonts/                           # Font dosyaları
-│   └── (Türkçe karakter desteği olan fontlar)
+├── 📁 fonts/ # Font dosyaları
+│ └── (Türkçe karakter desteği olan fontlar)
 │
-├── 📄 README.md                        # Ana README
-│                                        # - Proje açıklaması
-│                                        # - Hızlı başlangıç
-│                                        # - Özellikler
+├── 📄 README.md # Ana README
+│ # - Proje açıklaması
+│ # - Hızlı başlangıç
+│ # - Özellikler
 │
-├── 📄 START.bat                        # Proje başlatma script'i
-│                                        # - Redis başlatma
-│                                        # - Celery Worker başlatma
-│                                        # - FastAPI başlatma
-│                                        # - Tarayıcı otomatik açma
+├── 📄 START.bat # Proje başlatma script'i
+│ # - Redis başlatma
+│ # - Celery Worker başlatma
+│ # - FastAPI başlatma
+│ # - Tarayıcı otomatik açma
 │
-├── 📄 STOP.bat                         # Proje durdurma script'i
-│                                        # - Tüm servisleri durdurma
+├── 📄 STOP.bat # Proje durdurma script'i
+│ # - Tüm servisleri durdurma
 │
-├── 📄 RESTART.bat                      # Proje yeniden başlatma
+├── 📄 RESTART.bat # Proje yeniden başlatma
 │
-├── 📄 CHECK.bat                        # Servis durumu kontrol
-│                                        # - Redis durumu
-│                                        # - Celery durumu
-│                                        # - FastAPI durumu
+├── 📄 CHECK.bat # Servis durumu kontrol
+│ # - Redis durumu
+│ # - Celery durumu
+│ # - FastAPI durumu
 │
-├── 📄 SETUP.bat                        # İlk kurulum script'i
-│                                        # - Virtual environment
-│                                        # - Temel paket yükleme
-│                                        # - Opsiyonel paket yükleme (Hugging Face, Argos, spaCy)
-│                                        # - spaCy model indirme
-│                                        # - .env oluşturma
-│                                        # - Klasör oluşturma
+├── 📄 SETUP.bat # İlk kurulum script'i
+│ # - Virtual environment
+│ # - Temel paket yükleme
+│ # - Opsiyonel paket yükleme (Hugging Face, Argos, spaCy)
+│ # - spaCy model indirme
+│ # - .env oluşturma
+│ # - Klasör oluşturma
 │
-├── 📄 INSTALL_OPTIONAL.bat             # Sadece opsiyonel paketler
-│                                        # - Hugging Face Transformers
-│                                        # - Argos Translate
-│                                        # - spaCy + modeller
+├── 📄 INSTALL_OPTIONAL.bat # Sadece opsiyonel paketler
+│ # - Hugging Face Transformers
+│ # - Argos Translate
+│ # - spaCy + modeller
 │
-├── 📄 INSTALL_ALL.bat                  # Tam kurulum script'i
+├── 📄 INSTALL_ALL.bat # Tam kurulum script'i
 │
-├── 📄 START.bat                        # Proje başlatma script'i
-│                                        # - Redis başlatma
-│                                        # - Celery Worker başlatma
-│                                        # - FastAPI başlatma
-│                                        # - Tarayıcıda API docs açma
+├── 📄 START.bat # Proje başlatma script'i
+│ # - Redis başlatma
+│ # - Celery Worker başlatma
+│ # - FastAPI başlatma
+│ # - Tarayıcıda API docs açma
 │
-├── 📄 STOP.bat                         # Tüm servisleri durdurma
+├── 📄 STOP.bat # Tüm servisleri durdurma
 │
-├── 📄 RESTART.bat                      # Servisleri yeniden başlatma
+├── 📄 RESTART.bat # Servisleri yeniden başlatma
 │
-├── 📄 CHECK.bat                        # Servis durumu kontrolü
+├── 📄 CHECK.bat # Servis durumu kontrolü
 │
-├── 📄 README_INSTALLATION.md           # Detaylı kurulum rehberi
+├── 📄 README_INSTALLATION.md # Detaylı kurulum rehberi
 │
-├── 📄 GITHUB_DEPLOY.bat                # GitHub'a yükleme script'i
+├── 📄 GITHUB_DEPLOY.bat # GitHub'a yükleme script'i
 │
-├── 📄 GITHUB_INSTRUCTIONS.md            # GitHub talimatları
+├── 📄 GITHUB_INSTRUCTIONS.md # GitHub talimatları
 │
-├── 📄 ENV_OLUSTUR.md                    # Environment variables rehberi
+├── 📄 ENV_OLUSTUR.md # Environment variables rehberi
 │
-├── 📄 KURULUM.md                        # Kurulum rehberi
+├── 📄 KURULUM.md # Kurulum rehberi
 │
-└── 📄 MIGRATIONS_GUIDE.md              # Database migration rehberi
-```
+└── 📄 MIGRATIONS_GUIDE.md # Database migration rehberi
+
+````
 
 ---
 
@@ -861,7 +897,7 @@ webtoon-ai-translator/
   "email": "string",
   "password": "string"
 }
-```
+````
 
 **Response:** JWT access token
 **Kullanım:** Kullanıcı kayıt işlemi
