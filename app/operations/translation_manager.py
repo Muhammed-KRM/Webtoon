@@ -315,7 +315,12 @@ def process_chapter_task(
         )
         
         processed_images_base64 = []
+        cleaned_images_base64 = []  # Store cleaned images
         text_cursor = 0
+        
+        # We need to collect raw cleaned bytes to save them via FileManager later
+        # (Though current flow returns result dict, the auto-publisher uses it)
+        # We'll encode them to base64 for the result dict
         
         for page_idx, img_bytes in enumerate(images_bytes):
             logger.debug(f"Processing image {page_idx + 1}/{len(images_bytes)}")
@@ -327,16 +332,23 @@ def process_chapter_task(
             page_translations = translated_flat[text_cursor:text_cursor + block_count]
             text_cursor += block_count
             
-            # Process image (in-paint + render text)
-            if (mode == TranslationMode.CLEAN or mode == "clean") and page_translations:
-                final_img_bytes = processor.process_image(
-                    img_bytes,
-                    blocks,
-                    page_translations
-                )
+            # 1. Clean image (always clean if mode is clean, or if we want to support editing)
+            # We always generate cleaned image for "clean" mode to enable Editor support
+            if mode == TranslationMode.CLEAN or mode == "clean":
+                cleaned_bytes = processor.clean_image(img_bytes, blocks)
+                # Store cleaned image
+                cleaned_b64 = base64.b64encode(cleaned_bytes).decode('utf-8')
+                cleaned_images_base64.append(cleaned_b64)
+                
+                if page_translations:
+                    # Render text on cleaned image
+                    final_img_bytes = processor.render_text(cleaned_bytes, blocks, page_translations)
+                else:
+                    final_img_bytes = cleaned_bytes
             else:
-                # Overlay mode or no translations - return original
+                # Overlay mode - no cleaning
                 final_img_bytes = img_bytes
+                cleaned_images_base64.append("")  # No cleaned image for overlay mode
             
             # Encode to base64
             b64_str = base64.b64encode(final_img_bytes).decode('utf-8')
@@ -359,6 +371,7 @@ def process_chapter_task(
         # Final result
         result = {
             "pages": processed_images_base64,
+            "cleaned_pages": cleaned_images_base64,  # New field
             "total": len(processed_images_base64),
             "original_texts": flat_text_list,
             "translated_texts": translated_flat,

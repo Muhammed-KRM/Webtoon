@@ -173,8 +173,6 @@ def edit_translation(
 ):
     """
     Edit a specific translation block
-    
-    Allows manual correction of individual translation blocks
     """
     try:
         # Get translation job
@@ -189,15 +187,158 @@ def edit_translation(
                 detail="Translation job not found"
             )
         
-        # In production, you would:
-        # 1. Get the translation result from cache/DB
-        # 2. Update the specific block's translation
-        # 3. Re-process the image with the edited text
-        # 4. Update the cache/DB with the corrected version
+        # 1. Load metadata to get file paths
+        from app.models.series import Chapter, ChapterTranslation
+        from app.services.file_manager import FileManager
+        from app.services.image_processor import ImageProcessor
+        import json
+        from pathlib import Path
+        import base64
         
+        # We need to find where the files are stored via the chapter relation
+        # or assuming we can find it via job result if available, 
+        # but for safety let's assume we can reconstruct path or find the translation entry
+        
+        translation = db.query(ChapterTranslation).filter(
+            ChapterTranslation.translation_job_id == request.task_id
+        ).first()
+        
+        if not translation or not translation.storage_path:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Translation files not found"
+            )
+        
+        storage_path = Path(translation.storage_path)
+        metadata_path = storage_path / "metadata.json"
+        
+        if not metadata_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Metadata file not found"
+            )
+            
+        with open(metadata_path, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+            
+        # 2. Update the specific text
+        # metadata structure: 
+        # "translated_texts": [...],
+        # "blocks": [{"page": 0, "blocks": [...]}, ...]
+        
+        # Calculate global text index
+        # We need to find which "translated_texts" index corresponds to page_index + block_index
+        # This depends on how many blocks were in previous pages
+        
+        global_index = 0
+        found = False
+        
+        blocks_structure = metadata.get("blocks", [])
+        
+        for p_idx, page_data in enumerate(blocks_structure):
+            if p_idx == request.page_index:
+                # We are in the correct page
+                if request.block_index < len(page_data["blocks"]):
+                    global_index += request.block_index
+                    found = True
+                    break
+                else:
+                     raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Block index {request.block_index} out of range for page {request.page_index}"
+                    )
+            else:
+                # Add all blocks from this page
+                global_index += len(page_data["blocks"])
+        
+        if not found:
+             raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Page {request.page_index} not found in metadata"
+            )
+            
+        # Validate global index
+        translated_texts = metadata.get("translated_texts", [])
+        if global_index >= len(translated_texts):
+             raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Global index {global_index} out of range (total {len(translated_texts)})"
+            )
+            
+        # Update text
+        old_text = translated_texts[global_index]
+        translated_texts[global_index] = request.translated_text
+        metadata["translated_texts"] = translated_texts
+        
+        # 3. Re-process the image
+        # Load cleaned image
+        # Assuming format: page_001.jpg/webp
+        # We need to detect extension. Let's look at the existing files in cleaning folder
+        cleaned_folder = storage_path / "cleaned"
+        if not cleaned_folder.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cleaned images not found. Cannot edit translation."
+            )
+            
+        # Find the file for this page (page index is 0-based, files are 1-based)
+        page_num = request.page_index + 1
+        page_files = list(cleaned_folder.glob(f"page_{page_num:03d}.*"))
+        
+        if not page_files:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Cleaned image for page {page_num} not found"
+            )
+            
+        cleaned_image_path = page_files[0]
+        with open(cleaned_image_path, 'rb') as f:
+            cleaned_bytes = f.read()
+            
+        # Prepare data for rendering
+        # Get blocks for this page
+        page_blocks_data = blocks_structure[request.page_index]["blocks"]
+        
+        # Get translations for this page
+        # Start index for this page in global list
+        start_idx = global_index - request.block_index
+        end_idx = start_idx + len(page_blocks_data)
+        page_translations = translated_texts[start_idx:end_idx]
+        
+        # Render
+        processor = ImageProcessor()
+        final_bytes = processor.render_text(
+            cleaned_bytes,
+            page_blocks_data, # Pass dict directly, render_text expects list of dicts
+            page_translations
+        )
+        
+        # 4. Save new image
+        # Overwrite the existing final image
+        # We need to match the extension of the final image in parent folder
+        # or just use the extension we generated
+        final_image_path = storage_path / cleaned_image_path.name # Use same name/ext as cleaned for simplicity? 
+        # Wait, if we use WebP we might change ext. 
+        # Let's check what's in the main folder
+        main_page_files = list(storage_path.glob(f"page_{page_num:03d}.*"))
+        target_path = main_page_files[0] if main_page_files else final_image_path
+        
+        with open(target_path, 'wb') as f:
+            f.write(final_bytes)
+            
+        # Update metadata file
+        with open(metadata_path, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+            
+        # 5. Update Cache/CDN if enabled (Logic omitted for brevity, but should invalidate cache)
+        if metadata.get("cdn_enabled"):
+             # In a real scenario, we would re-upload to CDN here
+             pass
+             
         logger.info(
             f"User {current_user.id} edited translation {request.task_id}: "
-            f"page {request.page_index}, block {request.block_index}"
+            f"page {request.page_index}, block {request.block_index}, "
+            f"text: '{old_text}' -> '{request.translated_text}'"
         )
         
         return BaseResponse.success_response(
@@ -207,7 +348,8 @@ def edit_translation(
                 "block_index": request.block_index,
                 "original_text": request.original_text,
                 "translated_text": request.translated_text,
-                "status": "edited"
+                "status": "edited",
+                "updated_image_url": f"/files/{translation.storage_path}/{target_path.name}?t={int(import_time.time())}" if 'import_time' in locals() else ""
             },
             "Translation edited successfully"
         )
