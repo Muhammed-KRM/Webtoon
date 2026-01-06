@@ -19,6 +19,7 @@ from app.services.file_manager import FileManager
 from app.services.api_cache import api_cache
 from app.core.query_optimizer import QueryOptimizer
 from app.core.cache_invalidation import CacheInvalidation
+from app.core.enums import TranslateType
 from sqlalchemy.orm import joinedload, selectinload
 
 router = APIRouter()
@@ -275,6 +276,7 @@ def get_chapter_translations(
 def request_chapter_translation(
     chapter_id: int,
     target_lang: str,
+    translate_type: int = Query(1, description="1 = AI (OpenAI GPT-4o-mini), 2 = Free (Google Translate/DeepL)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -335,6 +337,13 @@ def request_chapter_translation(
         )
         db.add(chapter_translation)
         
+        # Validate translate_type
+        if translate_type not in [TranslateType.AI, TranslateType.FREE]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"translate_type must be {TranslateType.AI} (AI) or {TranslateType.FREE} (Free)"
+            )
+        
         # Start translation task
         from app.operations.translation_manager import process_chapter_task
         
@@ -343,8 +352,9 @@ def request_chapter_translation(
             target_lang=target_lang,
             source_lang="en",
             mode="clean",
-            use_cache=True,
-            series_name=chapter.series.title if chapter.series else None
+            use_cache=(translate_type == TranslateType.AI),  # Use Cached Input only for AI
+            series_name=chapter.series.title if chapter.series else None,
+            translate_type=translate_type
         )
         
         # Update ChapterTranslation with task ID

@@ -9,6 +9,7 @@ from app.operations.translation_manager import celery_app, process_chapter_task
 from app.services.url_generator import URLGenerator
 from app.services.language_detector import LanguageDetector
 from app.services.file_manager import FileManager
+from app.core.enums import TranslateType
 
 
 @celery_app.task(bind=True, name="batch_translation_task")
@@ -19,7 +20,8 @@ def batch_translation_task(
     source_lang: str = "en",
     target_lang: str = "tr",
     mode: str = "clean",
-    series_name: Optional[str] = None
+    series_name: Optional[str] = None,
+    translate_type: int = TranslateType.AI  # 1 = AI, 2 = Free
 ) -> Dict:
     """
     Process multiple chapters in batch
@@ -70,8 +72,11 @@ def batch_translation_task(
                 task = process_chapter_task.delay(
                     chapter_url=chapter_url,
                     target_lang=target_lang,
+                    source_lang=source_lang,
                     mode=mode,
-                    use_cache=True
+                    use_cache=(translate_type == TranslateType.AI),  # Use Cached Input only for AI
+                    series_name=series_name,
+                    translate_type=translate_type
                 )
                 
                 # Wait for completion

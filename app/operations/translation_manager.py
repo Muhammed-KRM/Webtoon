@@ -5,12 +5,19 @@ from celery import Celery
 from celery.result import AsyncResult
 import base64
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, Optional
+from datetime import datetime, Optional
 from loguru import logger
 from app.core.config import settings
 from app.services.scraper_service import ScraperService
 from app.services.ocr_service import OCRService
 from app.services.ai_translator import AITranslator
+from app.services.free_translator import FreeTranslator
+from app.services.ner_service import NERService
+from app.services.advanced_ner_service import AdvancedNERService
+from app.services.alternative_translator import AlternativeTranslator
+from app.services.dictionary_service import DictionaryService
+from app.core.enums import TranslateType
 from app.services.image_processor import ImageProcessor
 from app.services.cache_service import CacheService
 from app.core.metrics import metrics
@@ -40,7 +47,8 @@ def process_chapter_task(
     source_lang: str = "en",
     mode: str = "clean",
     use_cache: bool = True,
-    series_name: Optional[str] = None
+    series_name: Optional[str] = None,
+    translate_type: int = TranslateType.AI  # 1 = AI, 2 = Free
 ) -> Dict[str, Any]:
     """
     Main translation pipeline task
@@ -61,18 +69,46 @@ def process_chapter_task(
         Dictionary with processed pages (base64 encoded)
     """
     scraper = None
+    start_time = time.time()
     try:
         # Initialize services
         cache_service = CacheService()
         scraper = ScraperService()
         ocr = OCRService()
-        translator = AITranslator()
+        ai_translator = AITranslator() if translate_type == TranslateType.AI else None
+        free_translator = FreeTranslator() if translate_type == TranslateType.FREE else None
+        # Use advanced NER if available, fallback to basic NER
+        try:
+            ner_service = AdvancedNERService(language=source_lang) if translate_type == TranslateType.FREE else None
+        except:
+            ner_service = NERService() if translate_type == TranslateType.FREE else None
         processor = ImageProcessor()
         
-        # Check cache first
-        cached_result = cache_service.get_cached_result(chapter_url, target_lang, mode)
+        # Get database session for dictionary (only for free translation)
+        db = None
+        dictionary = None
+        if translate_type == TranslateType.FREE and series_name:
+            try:
+                from app.db.session import SessionLocal
+                db = SessionLocal()
+                series_id = DictionaryService.get_series_id_from_name(db, series_name)
+                if series_id:
+                    dictionary = DictionaryService.get_or_create_dictionary(
+                        db, series_id, source_lang, target_lang
+                    )
+                    logger.info(f"Using dictionary for series {series_id} ({source_lang}->{target_lang})")
+            except Exception as e:
+                logger.warning(f"Failed to initialize dictionary: {e}")
+        
+        # Check cache first (include translate_type in cache key)
+        cache_key_suffix = f"_{translate_type}"
+        cached_result = cache_service.get_cached_result(
+            chapter_url, target_lang, f"{mode}{cache_key_suffix}"
+        )
         if cached_result:
             logger.info(f"Returning cached result for: {chapter_url}")
+            if db:
+                db.close()
             return cached_result
         
         # Step 1: Fetch images
@@ -127,11 +163,11 @@ def process_chapter_task(
                 "message": "No text found in images"
             }
         
-        # Step 3: AI Translation (Context-aware)
+        # Step 3: Translation (AI or Free)
         # Detect source language from URL if not provided
-        if 'source_lang' not in locals():
-            from app.services.language_detector import LanguageDetector
-            detected_lang = LanguageDetector.detect_from_url(chapter_url)
+        from app.services.language_detector import LanguageDetector
+        detected_lang = LanguageDetector.detect_from_url(chapter_url)
+        if not source_lang:
             source_lang = detected_lang or "en"
         
         self.update_state(
@@ -139,13 +175,75 @@ def process_chapter_task(
             meta={'progress': 50, 'message': f'Translating from {source_lang} to {target_lang}...'}
         )
         
-        logger.info(f"Translating {len(flat_text_list)} texts from {source_lang} to {target_lang}")
-        translated_flat = translator.translate_batch_context_aware(
-            all_texts=flat_text_list,
-            source_lang=source_lang,
-            target_lang=target_lang,
-            use_cache=use_cache
-        )
+        logger.info(f"Translating {len(flat_text_list)} texts from {source_lang} to {target_lang} (type: {translate_type})")
+        
+        if translate_type == TranslateType.AI:
+            # AI Translation (OpenAI GPT-4o-mini)
+            translated_flat = ai_translator.translate_batch_context_aware(
+                all_texts=flat_text_list,
+                source_lang=source_lang,
+                target_lang=target_lang,
+                use_cache=use_cache
+            )
+        elif translate_type == TranslateType.FREE:
+            # Free Translation with Dictionary Support
+            # Step 3a: Apply dictionary (replace known names)
+            texts_with_dict = flat_text_list
+            if dictionary:
+                try:
+                    texts_with_dict, replacements = DictionaryService.apply_dictionary(
+                        db, dictionary.id, flat_text_list
+                    )
+                    if replacements:
+                        logger.info(f"Applied {len(replacements)} dictionary entries")
+                except Exception as e:
+                    logger.warning(f"Dictionary application failed: {e}")
+                    texts_with_dict = flat_text_list
+            
+            # Step 3b: Free translation
+            translated_flat = free_translator.translate_batch(
+                texts=texts_with_dict,
+                source_lang=source_lang,
+                target_lang=target_lang
+            )
+            
+            # Step 3c: Detect new proper nouns and add to dictionary
+            if dictionary and ner_service:
+                try:
+                    # Extract all proper nouns from original texts
+                    all_proper_nouns = ner_service.extract_all_names(flat_text_list)
+                    
+                    # For each detected proper noun, check if it's in dictionary
+                    for proper_noun in all_proper_nouns:
+                        # Skip if already in dictionary
+                        existing_entry = DictionaryService.lookup_name(db, dictionary.id, proper_noun)
+                        if existing_entry:
+                            # Update usage count
+                            existing_entry.usage_count += 1
+                            existing_entry.last_used_at = datetime.utcnow()
+                            db.commit()
+                            continue
+                        
+                        # New proper noun - translate it and add to dictionary
+                        try:
+                            translated_name = free_translator.translate_single(
+                                proper_noun, source_lang, target_lang
+                            )
+                            
+                            # Add to dictionary
+                            DictionaryService.add_or_update_entry(
+                                db, dictionary.id, proper_noun, translated_name, "auto"
+                            )
+                            logger.info(f"Added new proper noun to dictionary: {proper_noun} -> {translated_name}")
+                        except Exception as e:
+                            logger.warning(f"Failed to add proper noun '{proper_noun}' to dictionary: {e}")
+                    
+                    # Cleanup dictionary if needed
+                    DictionaryService.cleanup_dictionary(db, dictionary.id)
+                except Exception as e:
+                    logger.warning(f"Dictionary update failed: {e}")
+        else:
+            raise ValueError(f"Invalid translate_type: {translate_type}. Must be {TranslateType.AI} (AI) or {TranslateType.FREE} (Free)")
         
         if len(translated_flat) != len(flat_text_list):
             logger.warning(
@@ -257,6 +355,12 @@ def process_chapter_task(
                 asyncio.set_event_loop(loop)
                 loop.run_until_complete(scraper.close())
                 loop.close()
+            except:
+                pass
+        # Close database session if opened
+        if 'db' in locals() and db:
+            try:
+                db.close()
             except:
                 pass
 

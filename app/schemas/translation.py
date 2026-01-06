@@ -3,6 +3,7 @@ Translation Schemas
 """
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+from app.core.enums import TranslateType
 
 
 class TranslationRequest(BaseModel):
@@ -13,6 +14,7 @@ class TranslationRequest(BaseModel):
     mode: str = "clean"  # clean, overlay
     quality: str = "high"  # high, fast
     series_name: Optional[str] = None  # Series name for file organization
+    translate_type: int = TranslateType.AI  # 1 = AI (OpenAI GPT-4o-mini), 2 = Free (Google Translate/DeepL)
 
 
 class JobStatusResponse(BaseModel):

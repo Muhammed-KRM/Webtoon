@@ -27,6 +27,7 @@ from app.services.url_generator import URLGenerator
 from app.services.language_detector import LanguageDetector
 from app.core.rate_limit import rate_limit
 from app.core.metrics import metrics
+from app.core.enums import TranslateType
 from datetime import datetime
 import uuid
 import time
@@ -51,14 +52,22 @@ def start_translation(
         from app.services.language_detector import LanguageDetector
         source_lang = LanguageDetector.detect_from_url(request.chapter_url) or "en"
         
+        # Validate translate_type
+        if request.translate_type not in [TranslateType.AI, TranslateType.FREE]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"translate_type must be {TranslateType.AI} (AI) or {TranslateType.FREE} (Free)"
+            )
+        
         # Start Celery task
         task = process_chapter_task.delay(
             chapter_url=request.chapter_url,
             target_lang=request.target_lang,
             source_lang=source_lang,
             mode=request.mode,
-            use_cache=True,  # Use Cached Input
-            series_name=request.series_name
+            use_cache=(request.translate_type == TranslateType.AI),  # Use Cached Input only for AI
+            series_name=request.series_name,
+            translate_type=request.translate_type
         )
         
         # Update task_id with Celery's task ID
@@ -242,6 +251,13 @@ def start_batch_translation(
         # Generate chapter numbers
         chapter_numbers = list(range(request.start_chapter, request.end_chapter + 1))
         
+        # Validate translate_type
+        if request.translate_type not in [TranslateType.AI, TranslateType.FREE]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"translate_type must be {TranslateType.AI} (AI) or {TranslateType.FREE} (Free)"
+            )
+        
         # Start batch task
         task = batch_translation_task.delay(
             base_url=request.base_url,
@@ -249,7 +265,8 @@ def start_batch_translation(
             source_lang=request.source_lang,
             target_lang=request.target_lang,
             mode=request.mode,
-            series_name=request.series_name
+            series_name=request.series_name,
+            translate_type=request.translate_type
         )
         
         # Save to database
@@ -311,6 +328,13 @@ def start_range_translation(
                 detail="Invalid chapter range format"
             )
         
+        # Validate translate_type
+        if request.translate_type not in [TranslateType.AI, TranslateType.FREE]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"translate_type must be {TranslateType.AI} (AI) or {TranslateType.FREE} (Free)"
+            )
+        
         # Start batch task
         task = batch_translation_task.delay(
             base_url=request.series_url,
@@ -318,7 +342,8 @@ def start_range_translation(
             source_lang=request.source_lang,
             target_lang=request.target_lang,
             mode=request.mode,
-            series_name=request.series_name
+            series_name=request.series_name,
+            translate_type=request.translate_type
         )
         
         # Save to database

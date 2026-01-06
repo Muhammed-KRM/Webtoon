@@ -3,6 +3,7 @@ Batch Translation Schemas
 """
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from app.core.enums import TranslateType
 
 
 class BatchTranslationRequest(BaseModel):
@@ -14,6 +15,7 @@ class BatchTranslationRequest(BaseModel):
     target_lang: str = Field(default="tr", description="Target language code (ISO 639-1)")
     mode: str = Field(default="clean", description="Processing mode: clean or overlay")
     series_name: Optional[str] = Field(None, description="Series name for folder organization")
+    translate_type: int = Field(default=TranslateType.AI, description="1 = AI (OpenAI GPT-4o-mini), 2 = Free (Google Translate/DeepL)")
 
 
 class BatchTranslationResponse(BaseModel):
@@ -32,4 +34,5 @@ class ChapterRangeRequest(BaseModel):
     target_lang: str = Field(default="tr", description="Target language code")
     mode: str = Field(default="clean", description="Processing mode")
     series_name: Optional[str] = None
+    translate_type: int = Field(default=TranslateType.AI, description="1 = AI (OpenAI GPT-4o-mini), 2 = Free (Google Translate/DeepL)")
 

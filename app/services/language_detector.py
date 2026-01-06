@@ -111,4 +111,64 @@ class LanguageDetector:
             return 'en'
         
         return None
+    
+    @classmethod
+    def normalize_language_code(cls, lang_code: str) -> str:
+        """
+        Normalize language code to ISO 639-1 format
+        
+        Args:
+            lang_code: Language code (may be in various formats)
+            
+        Returns:
+            Normalized language code (lowercase, 2-letter)
+        """
+        if not lang_code:
+            return "en"
+        
+        lang_code = lang_code.lower().strip()
+        
+        # If already in SUPPORTED_LANGUAGES, return as is
+        if lang_code in cls.SUPPORTED_LANGUAGES:
+            return lang_code
+        
+        # Try to map common variations
+        lang_map = {
+            "english": "en",
+            "turkish": "tr",
+            "spanish": "es",
+            "french": "fr",
+            "german": "de",
+            "italian": "it",
+            "portuguese": "pt",
+            "russian": "ru",
+            "japanese": "ja",
+            "korean": "ko",
+            "chinese": "zh",
+        }
+        
+        if lang_code in lang_map:
+            return lang_map[lang_code]
+        
+        # If 3-letter code, try to convert (simplified)
+        if len(lang_code) == 3:
+            # Common 3-letter to 2-letter mappings
+            iso3_to_2 = {
+                "eng": "en",
+                "tur": "tr",
+                "spa": "es",
+                "fra": "fr",
+                "deu": "de",
+                "ita": "it",
+                "por": "pt",
+                "rus": "ru",
+                "jpn": "ja",
+                "kor": "ko",
+                "zho": "zh",
+            }
+            if lang_code in iso3_to_2:
+                return iso3_to_2[lang_code]
+        
+        # Default to English if unknown
+        return "en"
 
