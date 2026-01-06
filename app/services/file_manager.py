@@ -62,9 +62,22 @@ class FileManager:
             )
             chapter_folder.mkdir(parents=True, exist_ok=True)
             
-            # Save pages
+            # Save pages (detect format from bytes)
             for idx, page_bytes in enumerate(pages, start=1):
-                page_path = chapter_folder / f"page_{idx:03d}.jpg"
+                # Detect image format from magic bytes
+                # WebP: RIFF...WEBP
+                if page_bytes.startswith(b'RIFF') and b'WEBP' in page_bytes[:12]:
+                    extension = "webp"
+                # JPEG: FF D8 FF
+                elif page_bytes.startswith(b'\xff\xd8\xff'):
+                    extension = "jpg"
+                # PNG: 89 50 4E 47
+                elif page_bytes.startswith(b'\x89PNG'):
+                    extension = "png"
+                else:
+                    extension = "jpg"  # Default fallback
+                
+                page_path = chapter_folder / f"page_{idx:03d}.{extension}"
                 with open(page_path, 'wb') as f:
                     f.write(page_bytes)
             

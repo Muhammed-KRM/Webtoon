@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     DEFAULT_FONT_SIZE: int = 20
     MIN_FONT_SIZE: int = 10
     MAX_FONT_SIZE: int = 40
+    USE_WEBP: bool = True  # Use WebP format for better compression
+    IMAGE_QUALITY: int = 90  # WebP/JPEG quality (0-100)
     
     class Config:
         env_file = ".env"

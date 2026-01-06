@@ -482,12 +482,16 @@ webtoon-ai-translator/
 │   │   │                                 # - Context-aware translation
 │   │   │                                 # - Cached Input support
 │   │   │                                 # - Batch translation
+│   │   │                                 # - Glossary system integration
+│   │   │                                 # - Smart chunking (token limit management)
 │   │   │
 │   │   ├── image_processor.py           # Image processing (OpenCV, Pillow)
 │   │   │                                 # - In-painting (text removal)
 │   │   │                                 # - Text rendering
 │   │   │                                 # - Dynamic font sizing
 │   │   │                                 # - Multi-line text support
+│   │   │                                 # - Text wrapping (textwrap)
+│   │   │                                 # - WebP format support (~50% smaller)
 │   │   │
 │   │   ├── file_manager.py              # File organization
 │   │   │                                 # - Folder structure creation
@@ -498,6 +502,8 @@ webtoon-ai-translator/
 │   │   │                                 # - Translation result caching
 │   │   │                                 # - Cache key generation
 │   │   │                                 # - TTL management
+│   │   │                                 # - Translation lock mechanism
+│   │   │                                 # - Duplicate prevention
 │   │   │
 │   │   ├── api_cache.py                 # API response caching
 │   │   │                                 # - Endpoint response caching
@@ -1826,6 +1832,159 @@ Bu dokümantasyon, Webtoon AI Translator projesinin tüm teknik detaylarını, k
 3. ✅ **Veri Kaybı Önleme**: Chapter/translation çakışmalarında eski veriler korunur veya güvenli şekilde değiştirilir
 4. ✅ **Validation**: Tag'ler enum'dan validate edilir, geçersiz tag'ler atlanır
 5. ✅ **Seri Description Zorunluluğu**: Seri oluştururken description zorunludur
+
+---
+
+### 📖 **Glossary System (Sözlük Sistemi)**
+
+#### Genel Bakış
+Her seri için özel bir sözlük (glossary) tutulur. Bu sözlük, karakter isimleri, özel terimler ve tutarlı çeviri gerektiren kelimeleri içerir.
+
+#### Modeller
+**Lokasyon:** `app/models/dictionary.py`
+
+- **SeriesDictionary**: Seri bazlı sözlük (her dil çifti için ayrı)
+  - `series_id`: Seri ID
+  - `source_lang`: Kaynak dil
+  - `target_lang`: Hedef dil
+  - `max_entries`: Maksimum entry sayısı (default: 1000)
+
+- **DictionaryEntry**: Sözlük girişi
+  - `original_name`: Orijinal isim/terim
+  - `translated_name`: Çevrilmiş isim/terim
+  - `usage_count`: Kullanım sayısı
+  - `is_proper_noun`: Özel isim mi? (auto/yes/no)
+  - `last_used_at`: Son kullanım tarihi
+
+#### DictionaryService
+**Lokasyon:** `app/services/dictionary_service.py`
+
+**Metodlar:**
+- `get_or_create_dictionary()`: Sözlük bul/oluştur
+- `lookup_name()`: İsim arama
+- `add_or_update_entry()`: Entry ekle/güncelle
+- `apply_dictionary()`: Sözlüğü metinlere uygula (FREE translation için)
+- `cleanup_dictionary()`: En az kullanılan entry'leri temizle
+
+#### AI Translation Entegrasyonu
+**Lokasyon:** `app/services/ai_translator.py`
+
+- Glossary, AI translation'ın **system prompt'una** eklenir
+- AI'ya "Bu kelimeleri görürsen kesinlikle karşılığındaki gibi çevir" talimatı verilir
+- Örnek prompt:
+  ```
+  CRITICAL GLOSSARY RULES (MANDATORY):
+  The following terms MUST be translated EXACTLY as specified:
+    - "Hyung" → "Abi"
+    - "Dungeon" → "Zindan"
+    - "Hunter" → "Avcı"
+  ```
+
+#### Otomatik Özel İsim Tespiti
+- NER (Named Entity Recognition) servisi ile otomatik tespit
+- Yeni özel isimler sözlüğe eklenir
+- Kullanım sayısına göre otomatik temizleme
+
+---
+
+### 🧩 **Smart Chunking (Akıllı Bölümleme)**
+
+#### Genel Bakış
+Büyük metinler için token limitini aşmamak için akıllı bölümleme algoritması.
+
+**Lokasyon:** `app/services/ai_translator.py` → `_translate_with_chunking()`
+
+#### Algoritma
+1. **Token Tahmini**: ~4 karakter = 1 token
+2. **Güvenli Limit**: 100,000 token (GPT-4o-mini için 128k max, ama 100k güvenli)
+3. **Chunk Boyutu**: ~80,000 karakter (~20,000 token)
+4. **Context Preservation**: Her chunk'a önceki chunk'ın özeti eklenir
+
+#### Özellikler
+- ✅ Otomatik chunk boyutu hesaplama
+- ✅ Context koruma (önceki chunk'ın özeti)
+- ✅ Hata toleransı (bir chunk başarısız olsa bile diğerleri devam eder)
+- ✅ Otomatik padding/truncation (uzunluk uyumsuzluğu durumunda)
+
+#### Kullanım
+Otomatik olarak devreye girer. Metin boyutu 100k token'ı aşarsa smart chunking kullanılır.
+
+---
+
+### 🖼️ **WebP Format Support**
+
+#### Genel Bakış
+Resimler WebP formatında kaydedilir, boyut %50 azalır.
+
+**Lokasyon:** `app/services/image_processor.py`, `app/services/file_manager.py`
+
+#### Özellikler
+- ✅ **WebP Format**: Varsayılan format (quality: 90, method: 6)
+- ✅ **JPEG Fallback**: WebP desteklenmiyorsa otomatik JPEG'e geçer
+- ✅ **Format Detection**: Magic bytes ile otomatik format algılama
+- ✅ **Configurable**: `USE_WEBP` ve `IMAGE_QUALITY` config'den ayarlanabilir
+
+#### Config
+```python
+# app/core/config.py
+USE_WEBP: bool = True  # WebP kullan
+IMAGE_QUALITY: int = 90  # 0-100 arası kalite
+```
+
+#### Dosya Yapısı
+- WebP: `page_001.webp`
+- JPEG: `page_001.jpg` (fallback)
+- PNG: `page_001.png` (eğer PNG kaydedilirse)
+
+---
+
+### 🔐 **Cache/Lock Mechanism**
+
+#### Genel Bakış
+Aynı bölüm için aynı anda 2 çeviri başlatılmasını engeller.
+
+**Lokasyon:** `app/services/cache_service.py`
+
+#### Özellikler
+- ✅ **Redis Lock**: SET NX EX ile atomic lock
+- ✅ **Lock Timeout**: 1 saat (3600 saniye)
+- ✅ **Otomatik Release**: Task tamamlandığında veya hata olduğunda
+- ✅ **Duplicate Prevention**: Aynı chapter_url + target_lang + translate_type için lock
+
+#### Metodlar
+- `acquire_translation_lock()`: Lock al
+- `release_translation_lock()`: Lock bırak
+- `is_translation_locked()`: Lock durumunu kontrol et
+
+#### Kullanım
+**Lokasyon:** `app/api/v1/endpoints/translate.py`
+
+1. Translation başlatılmadan önce lock kontrolü
+2. Lock alınamazsa: 409 Conflict döner veya mevcut task ID döner
+3. Task tamamlandığında: Lock otomatik release edilir
+4. Hata durumunda: Lock otomatik release edilir
+
+---
+
+### 📝 **Text Wrapping Improvements**
+
+#### Genel Bakış
+Metinlerin balonlara düzgün sığması için geliştirilmiş text wrapping.
+
+**Lokasyon:** `app/services/image_processor.py` → `_wrap_text()`
+
+#### Özellikler
+- ✅ **textwrap Kütüphanesi**: Python'un textwrap modülü kullanılır
+- ✅ **Doğru Genişlik Hesaplama**: Font metrikleri ile gerçek genişlik hesaplanır
+- ✅ **Uzun Kelime Desteği**: `break_long_words=True` ile uzun kelimeler bölünür
+- ✅ **Hiphen Desteği**: `break_on_hyphens=True` ile tire işaretlerinde bölünür
+- ✅ **Karakter Bazlı Bölme**: Gerekirse karakter bazlı bölme yapılır
+
+#### Algoritma
+1. `textwrap.wrap()` ile metin satırlara bölünür
+2. Her satırın genişliği font metrikleri ile kontrol edilir
+3. Satır çok genişse karakter bazlı bölme yapılır
+4. Sonuç: Balona sığan, okunabilir metin
 
 ---
 

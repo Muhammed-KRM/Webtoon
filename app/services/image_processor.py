@@ -104,25 +104,38 @@ class ImageProcessor:
         return best_size, best_font
     
     def _wrap_text(self, text: str, max_width: int, font: ImageFont.FreeTypeFont) -> List[str]:
-        """Wrap text to fit within max_width"""
-        words = text.split()
+        """
+        Wrap text to fit within max_width with accurate width calculation
+        
+        Uses textwrap for better handling of long words and proper wrapping
+        """
+        # Use textwrap for better word breaking
+        wrapped = textwrap.wrap(
+            text,
+            width=max_width // (font.size if hasattr(font, 'size') else 10) if max_width > 0 else 50,
+            break_long_words=True,
+            break_on_hyphens=True
+        )
+        
+        # Verify each line fits (with accurate measurement)
         lines = []
-        current_line = []
-        
-        for word in words:
-            test_line = ' '.join(current_line + [word])
-            # Estimate width (approximate)
-            width = len(test_line) * (font.size if hasattr(font, 'size') else 10)
-            
-            if width <= max_width:
-                current_line.append(word)
+        for line in wrapped:
+            # Get accurate width using font metrics
+            if hasattr(font, 'getsize'):
+                line_width = font.getsize(line)[0]
             else:
-                if current_line:
-                    lines.append(' '.join(current_line))
-                current_line = [word]
-        
-        if current_line:
-            lines.append(' '.join(current_line))
+                # Fallback: approximate (0.6 is average character width ratio)
+                line_width = len(line) * (font.size if hasattr(font, 'size') else 10) * 0.6
+            
+            if line_width <= max_width or not lines:  # Always add at least one line
+                lines.append(line)
+            else:
+                # Line too wide, need to break further
+                # Split by characters if needed
+                chars_per_line = int(max_width / (font.size if hasattr(font, 'size') else 10) * 1.6)
+                if chars_per_line > 0:
+                    for i in range(0, len(line), chars_per_line):
+                        lines.append(line[i:i+chars_per_line])
         
         return lines if lines else [text]
     
@@ -233,9 +246,26 @@ class ImageProcessor:
                         font=font
                     )
             
-            # 6. Convert back to bytes
+            # 6. Convert back to bytes (WebP format for better compression)
             buf = io.BytesIO()
-            img_pil.save(buf, format='JPEG', quality=95)
+            if settings.USE_WEBP:
+                try:
+                    # Try WebP first (better compression, ~50% smaller)
+                    img_pil.save(
+                        buf,
+                        format='WEBP',
+                        quality=settings.IMAGE_QUALITY,
+                        method=6  # Best compression method
+                    )
+                    logger.debug("Saved image as WebP format")
+                except Exception as e:
+                    # Fallback to JPEG if WebP not supported
+                    logger.warning(f"WebP not supported, falling back to JPEG: {e}")
+                    buf = io.BytesIO()
+                    img_pil.save(buf, format='JPEG', quality=settings.IMAGE_QUALITY)
+            else:
+                # Use JPEG if WebP disabled
+                img_pil.save(buf, format='JPEG', quality=settings.IMAGE_QUALITY)
             return buf.getvalue()
             
         except Exception as e:
