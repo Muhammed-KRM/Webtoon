@@ -10,9 +10,9 @@ try:
     import argostranslate.package
     import argostranslate.translate
     ARGOS_AVAILABLE = True
-except ImportError:
+except (ImportError, Exception) as e:
     ARGOS_AVAILABLE = False
-    logger.warning("Argos Translate not available. Install with: pip install argostranslate")
+    logger.warning(f"Argos Translate not available: {e}")
 
 # Try to import transformers (Hugging Face)
 try:

@@ -10,9 +10,9 @@ from loguru import logger
 try:
     import spacy
     SPACY_AVAILABLE = True
-except ImportError:
+except (ImportError, Exception) as e:
     SPACY_AVAILABLE = False
-    logger.warning("spaCy not available. Using regex-based NER fallback.")
+    logger.warning(f"spaCy not available: {e}. Using regex-based NER fallback.")
 
 
 class AdvancedNERService:

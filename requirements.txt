@@ -26,8 +26,8 @@ lxml==5.1.0
 
 # Image Processing
 opencv-python==4.9.0.80
-Pillow==10.2.0
-numpy==1.26.3
+Pillow>=11.3.0
+numpy>=1.26.0
 
 # OCR
 easyocr==1.7.1
@@ -37,10 +37,10 @@ openai==1.12.0
 deep-translator==1.11.4  # Free translation service (Google Translate, DeepL free tier)
 argostranslate==1.9.0  # Free offline translation (Argos Translate) - OPTIONAL
 transformers==4.36.2  # Hugging Face models for translation - OPTIONAL
-torch==2.1.2  # PyTorch for transformers (CPU version) - OPTIONAL
+torch>=2.9.0  # PyTorch for transformers (CPU version) - OPTIONAL
 
 # NER (Named Entity Recognition)
-spacy==3.7.2  # Professional NER library - OPTIONAL
+# spacy==3.7.2  # Professional NER library - OPTIONAL - Commented out for Python 3.14 compatibility
 # Note: After installing, run: python -m spacy download en_core_web_sm
 # For Turkish: python -m spacy download tr_core_news_sm (if available)
 
