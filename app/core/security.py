@@ -4,7 +4,7 @@ Security utilities - JWT, Password Hashing
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -12,21 +12,32 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        password_bytes = plain_password.encode('utf-8')
+        # Truncate to 72 bytes if necessary
+        if len(password_bytes) > 72:
+            password_bytes = password_bytes[:72]
+        return bcrypt.checkpw(password_bytes, hashed_password.encode('utf-8'))
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    return pwd_context.hash(password)
+    """Hash a password using bcrypt"""
+    password_bytes = password.encode('utf-8')
+    # Bcrypt has a 72 byte limit, truncate if necessary
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -63,8 +74,14 @@ async def get_current_user_optional(
     if payload is None:
         return None
     
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    user_id_str = payload.get("sub")
+    if user_id_str is None:
+        return None
+    
+    # Convert string to int (JWT sub must be string)
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
         return None
     
     user = db.query(User).filter(User.id == user_id).first()
@@ -92,8 +109,14 @@ async def get_current_user(
     if payload is None:
         raise credentials_exception
     
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    user_id_str = payload.get("sub")
+    if user_id_str is None:
+        raise credentials_exception
+    
+    # Convert string to int (JWT sub must be string)
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
         raise credentials_exception
     
     user = db.query(User).filter(User.id == user_id).first()

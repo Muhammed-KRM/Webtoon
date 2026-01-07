@@ -22,33 +22,44 @@ router = APIRouter()
 @router.post("/register", response_model=BaseResponse[UserResponse])
 def register(user_data: UserRegister, db: Session = Depends(get_db)):
     """Register a new user"""
-    # Check if user exists
-    existing_user = db.query(User).filter(
-        (User.username == user_data.username) | (User.email == user_data.email)
-    ).first()
-    
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username or email already registered"
+    try:
+        # Check if user exists
+        existing_user = db.query(User).filter(
+            (User.username == user_data.username) | (User.email == user_data.email)
+        ).first()
+        
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username or email already registered"
+            )
+        
+        # Create new user
+        hashed_password = get_password_hash(user_data.password)
+        new_user = User(
+            username=user_data.username,
+            email=user_data.email,
+            hashed_password=hashed_password
         )
-    
-    # Create new user
-    hashed_password = get_password_hash(user_data.password)
-    new_user = User(
-        username=user_data.username,
-        email=user_data.email,
-        hashed_password=hashed_password
-    )
-    
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return BaseResponse.success_response(
-        UserResponse.model_validate(new_user),
-        "User registered successfully"
-    )
+        
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        
+        return BaseResponse.success_response(
+            UserResponse.model_validate(new_user),
+            "User registered successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        from loguru import logger
+        logger.error(f"Registration error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error registering user: {str(e)}"
+        )
 
 
 @router.post("/login", response_model=BaseResponse[Token])
@@ -72,7 +83,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
     # Create access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.id},
+        data={"sub": str(user.id)},  # JWT subject must be a string
         expires_delta=access_token_expires
     )
     

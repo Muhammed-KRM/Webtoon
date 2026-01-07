@@ -1,0 +1,71 @@
+================================================================================
+  WEBTOON AI TRANSLATOR - DETAYLI ENDPOINT TEST RAPORU
+================================================================================
+Test Tarihi: 2026-01-07 11:40:34
+Base URL: http://localhost:8000
+================================================================================
+
+[INFO] 
+[1] HEALTH CHECK & ROOT ENDPOINTS
+[PASS] Root Endpoint - PASS (200) - 2.17s
+[PASS] Health Check - PASS (200) - 2.07s
+[PASS] OpenAPI JSON - PASS (200) - 2.33s
+[PASS] API Docs - PASS (200) - 2.08s
+[INFO] 
+[2] AUTHENTICATION ENDPOINTS
+[INFO] 
+=== AUTHENTICATION SETUP ===
+[FAIL] User Registration - FAIL (500) - {"success":false,"message":"Internal server error. Please try again later.","data":null}
+[WARN] Registration failed, trying login with existing user
+[FAIL] User Login (Existing) - FAIL (401) - {"detail":"Incorrect username or password"}
+[INFO] 
+[3] PUBLIC ENDPOINTS
+[PASS] List Public Series - PASS (200) - 2.07s
+[PASS] Search Series - PASS (200) - 2.08s
+[PASS] Filter by Genre - PASS (200) - 2.08s
+[PASS] Sort by Popular - PASS (200) - 2.09s
+[INFO] 
+[4] DISCOVERY ENDPOINTS
+[FAIL] Trending Series (Day) - FAIL (422) - {"success":false,"message":"Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer","data":null}
+[FAIL] Trending Series (Week) - FAIL (422) - {"success":false,"message":"Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer","data":null}
+[FAIL] Featured Series - FAIL (422) - {"success":false,"message":"Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer","data":null}
+[FAIL] Popular Series - FAIL (422) - {"success":false,"message":"Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer","data":null}
+[FAIL] Newest Series - FAIL (422) - {"success":false,"message":"Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer","data":null}
+[PASS] List Tags - PASS (200) - 2.06s
+[PASS] Validate Tags - PASS (200) - 2.07s
+[FAIL] Get Genres - FAIL (422) - {"success":false,"message":"Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer","data":null}
+[INFO] 
+[5] TRANSLATION ENDPOINTS
+[INFO] 
+[6] JOBS ENDPOINTS
+[INFO] 
+[7] SERIES MANAGEMENT ENDPOINTS
+[INFO] 
+[8] USER PROFILE ENDPOINTS
+[INFO] 
+[9] READING HISTORY ENDPOINTS
+[INFO] 
+[10] COMMENTS ENDPOINTS
+[INFO] 
+[11] REACTIONS ENDPOINTS
+[INFO] 
+[12] SITE SETTINGS ENDPOINTS
+[PASS] Get Site Settings - PASS (200) - 2.09s
+[INFO] 
+[13] METRICS ENDPOINTS
+[INFO] 
+[14] CACHE ENDPOINTS
+[INFO] 
+[15] NOTIFICATIONS ENDPOINTS
+[INFO] 
+[16] SUBSCRIPTION ENDPOINTS
+[INFO] 
+[17] FILES ENDPOINTS
+
+Toplam Test:  19
+[92mGecen:        11[0m
+[91mBasarisiz:    8[0m
+[96mAtlanan:      0[0m
+Basarı Oranı: 57.9%
+================================================================================
+

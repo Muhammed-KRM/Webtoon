@@ -1,0 +1,594 @@
+================================================================================
+  WEBTOON AI TRANSLATOR - DETAYLI ENDPOINT TEST RAPORU
+================================================================================
+Test Tarihi: 2026-01-07 11:51:26
+Base URL: http://localhost:8000
+================================================================================
+
+[INFO] 
+[1] HEALTH CHECK & ROOT ENDPOINTS
+[PASS] Root Endpoint - PASS (200) - 2.16s
+[PASS] Health Check - PASS (200) - 2.06s
+[PASS] OpenAPI JSON - PASS (200) - 2.29s
+[PASS] API Docs - PASS (200) - 2.07s
+[INFO] 
+[2] AUTHENTICATION ENDPOINTS
+[INFO] 
+=== AUTHENTICATION SETUP ===
+[PASS] User Registration - PASS (200) - 2.33s
+[PASS] User Login - PASS (200) - 2.30s
+[INFO] Token obtained: eyJhbGciOiJIUzI1NiIs...
+[FAIL] Get Current User - FAIL (401) - {"detail":"Could not validate credentials"}
+[INFO] 
+[3] PUBLIC ENDPOINTS
+[PASS] List Public Series - PASS (200) - 2.15s
+[PASS] Search Series - PASS (200) - 2.07s
+[PASS] Filter by Genre - PASS (200) - 2.08s
+[PASS] Sort by Popular - PASS (200) - 2.07s
+[INFO] 
+[4] DISCOVERY ENDPOINTS
+[PASS] Trending Series (Day) - PASS (200) - 2.06s
+[PASS] Trending Series (Week) - PASS (200) - 2.07s
+[PASS] Featured Series - PASS (200) - 2.07s
+[PASS] Popular Series - PASS (200) - 2.08s
+[PASS] Newest Series - PASS (200) - 2.07s
+[PASS] List Tags - PASS (200) - 2.09s
+[PASS] Validate Tags - PASS (200) - 2.07s
+[PASS] Get Genres - PASS (200) - 2.07s
+[INFO] 
+[5] TRANSLATION ENDPOINTS
+[FAIL] Start Translation - FAIL (422) - {"success":false,"message":"Validation error: ('query', 'args'): Field required; ('query', 'kwargs'): Field required","data":null}
+[FAIL] Start Batch Translation - FAIL (401) - {"detail":"Could not validate credentials"}
+[INFO] 
+[6] JOBS ENDPOINTS
+[FAIL] Get Job History - FAIL (401) - {"detail":"Could not validate credentials"}
+[FAIL] Get Job Status - FAIL (405) - {"detail":"Method Not Allowed"}
+[INFO] 
+[7] SERIES MANAGEMENT ENDPOINTS
+[FAIL] Create Series - FAIL (401) - {"detail":"Could not validate credentials"}
+[FAIL] List My Series - FAIL (422) - {"success":false,"message":"Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer","data":null}
+[INFO] 
+[8] USER PROFILE ENDPOINTS
+[INFO] 
+[9] READING HISTORY ENDPOINTS
+[FAIL] Get Reading History - FAIL (401) - {"detail":"Could not validate credentials"}
+[FAIL] Get Bookmarks - FAIL (404) - {"detail":"Not Found"}
+[INFO] 
+[10] COMMENTS ENDPOINTS
+[PASS] List Comments - PASS (200) - 2.09s
+[INFO] 
+[11] REACTIONS ENDPOINTS
+[FAIL] List Reactions - FAIL (400) - {"detail":"Exactly one of series_id, chapter_id, or comment_id must be provided"}
+[INFO] 
+[12] SITE SETTINGS ENDPOINTS
+[PASS] Get Site Settings - PASS (200) - 2.06s
+[INFO] 
+[13] METRICS ENDPOINTS
+[FAIL] Get Metrics Summary - FAIL (401) - {"detail":"Could not validate credentials"}
+[INFO] 
+[14] CACHE ENDPOINTS
+[FAIL] Get Cache Status - FAIL (401) - {"detail":"Could not validate credentials"}
+[INFO] 
+[15] NOTIFICATIONS ENDPOINTS
+[FAIL] Get Notifications - FAIL (401) - {"detail":"Could not validate credentials"}
+[INFO] 
+[16] SUBSCRIPTION ENDPOINTS
+[FAIL] Get Subscription Status - FAIL (404) - {"detail":"Not Found"}
+[INFO] 
+[17] FILES ENDPOINTS
+[FAIL] List Files - FAIL (404) - {"detail":"Not Found"}
+
+Toplam Test:  35
+[92mGecen:        20[0m
+[91mBasarisiz:    15[0m
+[96mAtlanan:      0[0m
+Basarı Oranı: 57.1%
+================================================================================
+
+[UYARI] SISTEMDE BAZI SORUNLAR VAR
+BASARISIZ TESTLER:
+  - Get Current User: Expected [200, 201], got 401
+  - Start Translation: Expected [200, 201, 400, 404, 409], got 422
+  - Start Batch Translation: Expected [200, 201, 400, 404], got 401
+  - Get Job History: Expected [200, 201], got 401
+  - Get Job Status: Expected [200, 404], got 405
+  - Create Series: Expected [200, 201], got 401
+  - List My Series: Expected [200, 201], got 422
+  - Get Reading History: Expected [200, 201], got 401
+  - Get Bookmarks: Expected [200, 201], got 404
+  - List Reactions: Expected [200, 201], got 400
+  - Get Metrics Summary: Expected [200, 201], got 401
+  - Get Cache Status: Expected [200, 201], got 401
+  - Get Notifications: Expected [200, 201], got 401
+  - Get Subscription Status: Expected [200, 201], got 404
+  - List Files: Expected [200, 201], got 404
+
+================================================================================
+  DETAYLI TEST SONUCLARI
+================================================================================
+
+
+[PASS] Root Endpoint
+  Method: GET
+  URL: http://localhost:8000
+  Status Code: 200
+  Response Time: 2.163708s
+  Response: {
+  "message": "Webtoon AI Translator API",
+  "version": "1.0.0",
+  "status": "running"
+}
+
+
+[PASS] Health Check
+  Method: GET
+  URL: http://localhost:8000/health
+  Status Code: 200
+  Response Time: 2.061806s
+  Response: {
+  "status": "healthy",
+  "database": "connected",
+  "redis": "connected",
+  "version": "1.0.0"
+}
+
+
+[PASS] OpenAPI JSON
+  Method: GET
+  URL: http://localhost:8000/openapi.json
+  Status Code: 200
+  Response Time: 2.293764s
+  Response: {
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Webtoon AI Translator",
+    "description": "Webtoon AI Translator - Profesyonel makine çeviri platformu",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register",
+        "description": "Register a new user",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "a
+
+
+[PASS] API Docs
+  Method: GET
+  URL: http://localhost:8000/docs
+  Status Code: 200
+  Response Time: 2.073316s
+  Response: "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css\">\n    <link rel=\"shortcut icon\" href=\"https://fastapi.tiangolo.com/img/favicon.png\">\n    <title>Webtoon AI Translator - Swagger UI</title>\n    </head>\n    <body>\n    <div id=\"swagger-ui\">\n    </div>\n    <script src=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js\"></script>\n    <!-- `SwaggerUIBundl
+
+
+[PASS] User Registration
+  Method: POST
+  URL: http://localhost:8000/api/v1/auth/register
+  Status Code: 200
+  Response Time: 2.326616s
+  Response: {
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "id": 1,
+    "username": "testuser_1767775895",
+    "email": "test_1767775895@example.com",
+    "is_active": true,
+    "role": "user"
+  }
+}
+
+
+[PASS] User Login
+  Method: POST
+  URL: http://localhost:8000/api/v1/auth/login
+  Status Code: 200
+  Response Time: 2.303596s
+  Response: {
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6MTc2Nzc3OTUwMH0.P1U8OQMcBbwyYEbvUAJhOEJCA5ov9cAUW-RRfOgSUKg",
+    "token_type": "bearer"
+  }
+}
+
+
+[FAIL] Get Current User
+  Method: GET
+  URL: http://localhost:8000/api/v1/auth/me
+  Status Code: 401
+  Response Time: 2.05501s
+  Error: Expected [200, 201], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[PASS] List Public Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.148843s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Search Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.071613s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Filter by Genre
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.081508s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Sort by Popular
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.069301s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Trending Series (Day)
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/trending
+  Status Code: 200
+  Response Time: 2.059161s
+  Response: {
+  "success": true,
+  "message": "Found 0 trending series",
+  "data": []
+}
+
+
+[PASS] Trending Series (Week)
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/trending
+  Status Code: 200
+  Response Time: 2.066955s
+  Response: {
+  "success": true,
+  "message": "Found 0 trending series",
+  "data": []
+}
+
+
+[PASS] Featured Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/featured
+  Status Code: 200
+  Response Time: 2.074967s
+  Response: {
+  "success": true,
+  "message": "Found 0 featured series",
+  "data": []
+}
+
+
+[PASS] Popular Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/popular
+  Status Code: 200
+  Response Time: 2.077474s
+  Response: {
+  "success": true,
+  "message": "Found 0 popular series",
+  "data": []
+}
+
+
+[PASS] Newest Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/newest
+  Status Code: 200
+  Response Time: 2.070925s
+  Response: {
+  "success": true,
+  "message": "Found 0 newest series",
+  "data": []
+}
+
+
+[PASS] List Tags
+  Method: GET
+  URL: http://localhost:8000/api/v1/tags
+  Status Code: 200
+  Response Time: 2.088318s
+  Response: {
+  "success": true,
+  "message": "Found 159 tags",
+  "data": {
+    "all_tags": [
+      "action",
+      "adventure",
+      "comedy",
+      "drama",
+      "fantasy",
+      "horror",
+      "mystery",
+      "romance",
+      "sci-fi",
+      "slice-of-life",
+      "sports",
+      "supernatural",
+      "thriller",
+      "western",
+      "school",
+      "workplace",
+      "historical",
+      "modern",
+      "futuristic",
+      "medieval",
+      "urban",
+      "rural",
+      "strong-female-lead",
+      
+
+
+[PASS] Validate Tags
+  Method: GET
+  URL: http://localhost:8000/api/v1/tags/validate
+  Status Code: 200
+  Response Time: 2.071845s
+  Response: {
+  "success": true,
+  "message": "Validated 2 tags",
+  "data": {
+    "valid_tags": [
+      {
+        "original": "action",
+        "normalized": "action",
+        "valid": true
+      },
+      {
+        "original": "comedy",
+        "normalized": "comedy",
+        "valid": true
+      }
+    ],
+    "invalid_tags": [],
+    "total_valid": 2,
+    "total_invalid": 0
+  }
+}
+
+
+[PASS] Get Genres
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/genres
+  Status Code: 200
+  Response Time: 2.069004s
+  Response: {
+  "success": true,
+  "message": "Found 0 genres",
+  "data": []
+}
+
+
+[FAIL] Start Translation
+  Method: POST
+  URL: http://localhost:8000/api/v1/translate/start
+  Status Code: 422
+  Response Time: 2.049032s
+  Error: Expected [200, 201, 400, 404, 409], got 422
+  Response: {
+  "success": false,
+  "message": "Validation error: ('query', 'args'): Field required; ('query', 'kwargs'): Field required",
+  "data": null
+}
+
+
+[FAIL] Start Batch Translation
+  Method: POST
+  URL: http://localhost:8000/api/v1/translate/batch/start
+  Status Code: 401
+  Response Time: 2.065958s
+  Error: Expected [200, 201, 400, 404], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[FAIL] Get Job History
+  Method: GET
+  URL: http://localhost:8000/api/v1/translate/jobs
+  Status Code: 401
+  Response Time: 2.049808s
+  Error: Expected [200, 201], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[FAIL] Get Job Status
+  Method: GET
+  URL: http://localhost:8000/api/v1/translate/jobs/invalid-task-id
+  Status Code: 405
+  Response Time: 2.059892s
+  Error: Expected [200, 404], got 405
+  Response: {
+  "detail": "Method Not Allowed"
+}
+
+
+[FAIL] Create Series
+  Method: POST
+  URL: http://localhost:8000/api/v1/series
+  Status Code: 401
+  Response Time: 2.072156s
+  Error: Expected [200, 201], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[FAIL] List My Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/my
+  Status Code: 422
+  Response Time: 2.065024s
+  Error: Expected [200, 201], got 422
+  Response: {
+  "success": false,
+  "message": "Validation error: ('path', 'series_id'): Input should be a valid integer, unable to parse string as an integer",
+  "data": null
+}
+
+
+[FAIL] Get Reading History
+  Method: GET
+  URL: http://localhost:8000/api/v1/reading/history
+  Status Code: 401
+  Response Time: 2.036737s
+  Error: Expected [200, 201], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[FAIL] Get Bookmarks
+  Method: GET
+  URL: http://localhost:8000/api/v1/reading/bookmarks
+  Status Code: 404
+  Response Time: 2.038001s
+  Error: Expected [200, 201], got 404
+  Response: {
+  "detail": "Not Found"
+}
+
+
+[PASS] List Comments
+  Method: GET
+  URL: http://localhost:8000/api/v1/comments
+  Status Code: 200
+  Response Time: 2.094508s
+  Response: {
+  "success": true,
+  "message": "Found 0 comments",
+  "data": []
+}
+
+
+[FAIL] List Reactions
+  Method: GET
+  URL: http://localhost:8000/api/v1/reactions
+  Status Code: 400
+  Response Time: 2.06812s
+  Error: Expected [200, 201], got 400
+  Response: {
+  "detail": "Exactly one of series_id, chapter_id, or comment_id must be provided"
+}
+
+
+[PASS] Get Site Settings
+  Method: GET
+  URL: http://localhost:8000/api/v1/settings
+  Status Code: 200
+  Response Time: 2.055034s
+  Response: {
+  "success": true,
+  "message": "Site settings retrieved",
+  "data": {
+    "id": 1,
+    "site_name": "Webtoon AI Translator",
+    "site_description": null,
+    "site_logo_url": null,
+    "theme": "light",
+    "primary_color": "#007bff",
+    "secondary_color": "#6c757d",
+    "maintenance_mode": false,
+    "maintenance_message": null,
+    "allow_registration": true,
+    "allow_guest_access": true,
+    "default_language": "tr",
+    "supported_languages": [
+      "tr",
+      "en"
+    ],
+    "creat
+
+
+[FAIL] Get Metrics Summary
+  Method: GET
+  URL: http://localhost:8000/api/v1/metrics/summary
+  Status Code: 401
+  Response Time: 2.079193s
+  Error: Expected [200, 201], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[FAIL] Get Cache Status
+  Method: GET
+  URL: http://localhost:8000/api/v1/cache/status
+  Status Code: 401
+  Response Time: 2.045337s
+  Error: Expected [200, 201], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[FAIL] Get Notifications
+  Method: GET
+  URL: http://localhost:8000/api/v1/notifications
+  Status Code: 401
+  Response Time: 2.076603s
+  Error: Expected [200, 201], got 401
+  Response: {
+  "detail": "Could not validate credentials"
+}
+
+
+[FAIL] Get Subscription Status
+  Method: GET
+  URL: http://localhost:8000/api/v1/subscription/status
+  Status Code: 404
+  Response Time: 2.036989s
+  Error: Expected [200, 201], got 404
+  Response: {
+  "detail": "Not Found"
+}
+
+
+[FAIL] List Files
+  Method: GET
+  URL: http://localhost:8000/api/v1/files
+  Status Code: 404
+  Response Time: 2.055001s
+  Error: Expected [200, 201], got 404
+  Response: {
+  "detail": "Not Found"
+}
+
