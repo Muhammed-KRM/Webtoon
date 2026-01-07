@@ -1,0 +1,847 @@
+================================================================================
+  WEBTOON AI TRANSLATOR - DETAYLI ENDPOINT TEST RAPORU
+================================================================================
+Test Tarihi: 2026-01-07 14:17:06
+Base URL: http://localhost:8000
+================================================================================
+
+[INFO] 
+[1] HEALTH CHECK & ROOT ENDPOINTS
+[PASS] Root Endpoint - PASS (200) - 2.07s
+[PASS] Health Check - PASS (200) - 2.09s
+[PASS] OpenAPI JSON - PASS (200) - 2.30s
+[PASS] API Docs - PASS (200) - 2.04s
+[INFO] 
+[2] AUTHENTICATION ENDPOINTS
+[INFO] 
+=== AUTHENTICATION SETUP ===
+[PASS] User Registration - PASS (200) - 2.31s
+[PASS] User Login - PASS (200) - 2.30s
+[INFO] Token obtained: eyJhbGciOiJIUzI1NiIs...
+[PASS] Get Current User - PASS (200) - 2.06s
+[INFO] User ID: 7
+[INFO] 
+=== ADMIN AUTHENTICATION SETUP ===
+[PASS] Create Admin User - PASS (200) - 2.32s
+[PASS] Admin Login - PASS (200) - 2.27s
+[INFO] Admin token obtained: eyJhbGciOiJIUzI1NiIs...
+[INFO] 
+[3] PUBLIC ENDPOINTS
+[PASS] List Public Series - PASS (200) - 2.15s
+[PASS] Search Series - PASS (200) - 2.10s
+[PASS] Filter by Genre - PASS (200) - 2.07s
+[PASS] Sort by Popular - PASS (200) - 2.06s
+[INFO] 
+[4] DISCOVERY ENDPOINTS
+[PASS] Trending Series (Day) - PASS (200) - 2.06s
+[PASS] Trending Series (Week) - PASS (200) - 2.08s
+[PASS] Featured Series - PASS (200) - 2.09s
+[PASS] Popular Series - PASS (200) - 2.05s
+[PASS] Newest Series - PASS (200) - 2.05s
+[PASS] List Tags - PASS (200) - 2.05s
+[PASS] Validate Tags - PASS (200) - 2.06s
+[PASS] Get Genres - PASS (200) - 2.06s
+[INFO] 
+[5] TRANSLATION ENDPOINTS
+[FAIL] Start Translation - FAIL (422) - {"success":false,"message":"Validation error: ('query', 'args'): Field required; ('query', 'kwargs'): Field required","data":null}
+[PASS] Start Batch Translation - PASS (200) - 2.19s
+[INFO] 
+[6] JOBS ENDPOINTS
+[PASS] Get Job History - PASS (200) - 2.08s
+[PASS] Get Job Status (via translate) - PASS (404) - 2.06s
+[INFO] 
+[7] SERIES MANAGEMENT ENDPOINTS
+[FAIL] Create Series - FAIL (403) - {"detail":"Admin access required"}
+[PASS] List Series - PASS (200) - 2.08s
+[INFO] 
+[8] USER PROFILE ENDPOINTS
+[PASS] Get User Profile - PASS (200) - 2.05s
+[PASS] Update User Profile - PASS (200) - 2.10s
+[INFO] 
+[9] READING HISTORY ENDPOINTS
+[PASS] Get Reading History - PASS (200) - 2.09s
+[PASS] Get Bookmarks - PASS (200) - 2.06s
+[INFO] 
+[10] COMMENTS ENDPOINTS
+[PASS] List Comments - PASS (200) - 2.09s
+[INFO] 
+[11] REACTIONS ENDPOINTS
+[SKIP] Reactions endpoint requires existing series/chapter/comment - SKIPPED
+[INFO] 
+[12] SITE SETTINGS ENDPOINTS
+[PASS] Get Site Settings - PASS (200) - 2.07s
+[INFO] 
+[13] METRICS ENDPOINTS
+[PASS] Get Metrics Summary - PASS (200) - 2.06s
+[INFO] 
+[14] CACHE ENDPOINTS
+[PASS] Get Cache Status - PASS (200) - 2.06s
+[INFO] 
+[15] NOTIFICATIONS ENDPOINTS
+[PASS] Get Notifications - PASS (200) - 2.09s
+[INFO] 
+[16] SUBSCRIPTION ENDPOINTS
+[PASS] Get Subscription Status - PASS (200) - 2.10s
+[INFO] 
+[17] FILES ENDPOINTS
+[PASS] List Chapters (Files) - PASS (200) - 2.07s
+[INFO] 
+[18] ADMIN ENDPOINTS
+[PASS] Get Admin Stats - PASS (200) - 2.08s
+[PASS] Clear Cache (Admin) - PASS (200) - 2.08s
+[FAIL] Get Admin Logs - FAIL (500) - Internal Server Error
+[PASS] Get Admin Logs Stats - PASS (200) - 2.08s
+[INFO] 
+[19] SITE SETTINGS (ADMIN UPDATE)
+[PASS] Update Site Settings (Admin) - PASS (200) - 2.11s
+[INFO] 
+=== DATABASE CHECK ===
+[INFO] Users in database: 8
+[INFO] Admin users: 1
+[INFO] Series in database: 0
+[INFO] Translation jobs: 3
+[INFO] Comments: 0
+[WARN] Database check error: no such table: readings
+
+Toplam Test:  43
+[92mGecen:        40[0m
+[91mBasarisiz:    3[0m
+[96mAtlanan:      0[0m
+Basarı Oranı: 93.0%
+================================================================================
+
+[OK] SISTEM SAGLIKLI!
+BASARISIZ TESTLER:
+  - Start Translation: Expected [200, 201, 400, 404, 409], got 422
+  - Create Series: Expected [200, 201], got 403
+  - Get Admin Logs: Expected [200, 201], got 500
+
+================================================================================
+  DETAYLI TEST SONUCLARI
+================================================================================
+
+
+[PASS] Root Endpoint
+  Method: GET
+  URL: http://localhost:8000
+  Status Code: 200
+  Response Time: 2.069127s
+  Response: {
+  "message": "Webtoon AI Translator API",
+  "version": "1.0.0",
+  "status": "running"
+}
+
+
+[PASS] Health Check
+  Method: GET
+  URL: http://localhost:8000/health
+  Status Code: 200
+  Response Time: 2.091862s
+  Response: {
+  "status": "healthy",
+  "database": "connected",
+  "redis": "connected",
+  "version": "1.0.0"
+}
+
+
+[PASS] OpenAPI JSON
+  Method: GET
+  URL: http://localhost:8000/openapi.json
+  Status Code: 200
+  Response Time: 2.299566s
+  Response: {
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Webtoon AI Translator",
+    "description": "Webtoon AI Translator - Profesyonel makine çeviri platformu",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register",
+        "description": "Register a new user",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "a
+
+
+[PASS] API Docs
+  Method: GET
+  URL: http://localhost:8000/docs
+  Status Code: 200
+  Response Time: 2.043336s
+  Response: "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css\">\n    <link rel=\"shortcut icon\" href=\"https://fastapi.tiangolo.com/img/favicon.png\">\n    <title>Webtoon AI Translator - Swagger UI</title>\n    </head>\n    <body>\n    <div id=\"swagger-ui\">\n    </div>\n    <script src=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js\"></script>\n    <!-- `SwaggerUIBundl
+
+
+[PASS] User Registration
+  Method: POST
+  URL: http://localhost:8000/api/v1/auth/register
+  Status Code: 200
+  Response Time: 2.313393s
+  Response: {
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "id": 7,
+    "username": "testuser_1767784634",
+    "email": "test_1767784634@example.com",
+    "is_active": true,
+    "role": "user"
+  }
+}
+
+
+[PASS] User Login
+  Method: POST
+  URL: http://localhost:8000/api/v1/auth/login
+  Status Code: 200
+  Response Time: 2.297646s
+  Response: {
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3IiwiZXhwIjoxNzY3Nzg4MjM5fQ.fj8mq-eMiIID4RyU57lQY7FCuXyjamcMdmOm4aQG7ZM",
+    "token_type": "bearer"
+  }
+}
+
+
+[PASS] Get Current User
+  Method: GET
+  URL: http://localhost:8000/api/v1/auth/me
+  Status Code: 200
+  Response Time: 2.059467s
+  Response: {
+  "success": true,
+  "message": "User information retrieved",
+  "data": {
+    "id": 7,
+    "username": "testuser_1767784634",
+    "email": "test_1767784634@example.com",
+    "is_active": true,
+    "role": "user"
+  }
+}
+
+
+[PASS] Create Admin User
+  Method: POST
+  URL: http://localhost:8000/api/v1/admin/users/create-admin
+  Status Code: 200
+  Response Time: 2.323021s
+  Response: {
+  "success": true,
+  "message": "Admin user created successfully",
+  "data": {
+    "id": 8,
+    "username": "admin_1767784641",
+    "email": "admin_1767784641@example.com",
+    "is_active": true,
+    "role": "admin"
+  }
+}
+
+
+[PASS] Admin Login
+  Method: POST
+  URL: http://localhost:8000/api/v1/auth/login
+  Status Code: 200
+  Response Time: 2.274296s
+  Response: {
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4IiwiZXhwIjoxNzY3Nzg4MjQ1fQ.ufdFpjwNM7Ehct9uMMsrO7Ek6HWKk57lG80-H_BTHzI",
+    "token_type": "bearer"
+  }
+}
+
+
+[PASS] List Public Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.154657s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Search Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.098288s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Filter by Genre
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.072398s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Sort by Popular
+  Method: GET
+  URL: http://localhost:8000/api/v1/public/series
+  Status Code: 200
+  Response Time: 2.060843s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Trending Series (Day)
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/trending
+  Status Code: 200
+  Response Time: 2.060924s
+  Response: {
+  "success": true,
+  "message": "Found 0 trending series",
+  "data": []
+}
+
+
+[PASS] Trending Series (Week)
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/trending
+  Status Code: 200
+  Response Time: 2.081615s
+  Response: {
+  "success": true,
+  "message": "Found 0 trending series",
+  "data": []
+}
+
+
+[PASS] Featured Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/featured
+  Status Code: 200
+  Response Time: 2.0916s
+  Response: {
+  "success": true,
+  "message": "Found 0 featured series",
+  "data": []
+}
+
+
+[PASS] Popular Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/popular
+  Status Code: 200
+  Response Time: 2.048465s
+  Response: {
+  "success": true,
+  "message": "Found 0 popular series",
+  "data": []
+}
+
+
+[PASS] Newest Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/newest
+  Status Code: 200
+  Response Time: 2.053246s
+  Response: {
+  "success": true,
+  "message": "Found 0 newest series",
+  "data": []
+}
+
+
+[PASS] List Tags
+  Method: GET
+  URL: http://localhost:8000/api/v1/tags
+  Status Code: 200
+  Response Time: 2.053269s
+  Response: {
+  "success": true,
+  "message": "Found 159 tags",
+  "data": {
+    "all_tags": [
+      "action",
+      "adventure",
+      "comedy",
+      "drama",
+      "fantasy",
+      "horror",
+      "mystery",
+      "romance",
+      "sci-fi",
+      "slice-of-life",
+      "sports",
+      "supernatural",
+      "thriller",
+      "western",
+      "school",
+      "workplace",
+      "historical",
+      "modern",
+      "futuristic",
+      "medieval",
+      "urban",
+      "rural",
+      "strong-female-lead",
+      
+
+
+[PASS] Validate Tags
+  Method: GET
+  URL: http://localhost:8000/api/v1/tags/validate
+  Status Code: 200
+  Response Time: 2.05755s
+  Response: {
+  "success": true,
+  "message": "Validated 2 tags",
+  "data": {
+    "valid_tags": [
+      {
+        "original": "action",
+        "normalized": "action",
+        "valid": true
+      },
+      {
+        "original": "comedy",
+        "normalized": "comedy",
+        "valid": true
+      }
+    ],
+    "invalid_tags": [],
+    "total_valid": 2,
+    "total_invalid": 0
+  }
+}
+
+
+[PASS] Get Genres
+  Method: GET
+  URL: http://localhost:8000/api/v1/series/genres
+  Status Code: 200
+  Response Time: 2.05917s
+  Response: {
+  "success": true,
+  "message": "Found 0 genres",
+  "data": []
+}
+
+
+[FAIL] Start Translation
+  Method: POST
+  URL: http://localhost:8000/api/v1/translate/start
+  Status Code: 422
+  Response Time: 2.045248s
+  Error: Expected [200, 201, 400, 404, 409], got 422
+  Response: {
+  "success": false,
+  "message": "Validation error: ('query', 'args'): Field required; ('query', 'kwargs'): Field required",
+  "data": null
+}
+
+
+[PASS] Start Batch Translation
+  Method: POST
+  URL: http://localhost:8000/api/v1/translate/batch/start
+  Status Code: 200
+  Response Time: 2.186181s
+  Response: {
+  "success": true,
+  "message": "Batch translation started",
+  "data": {
+    "task_id": "70954644-12e9-4f42-9898-9eff05db3dda",
+    "total_chapters": 3,
+    "chapters": [
+      {
+        "chapter": 1,
+        "status": "pending"
+      },
+      {
+        "chapter": 2,
+        "status": "pending"
+      },
+      {
+        "chapter": 3,
+        "status": "pending"
+      }
+    ],
+    "message": "Batch translation started for 3 chapters"
+  }
+}
+
+
+[PASS] Get Job History
+  Method: GET
+  URL: http://localhost:8000/api/v1/translate/jobs
+  Status Code: 200
+  Response Time: 2.076369s
+  Response: {
+  "success": true,
+  "message": "Job history retrieved",
+  "data": {
+    "jobs": [
+      {
+        "task_id": "70954644-12e9-4f42-9898-9eff05db3dda",
+        "chapter_url": "https://example.com/webtoon/test/episode-{}/viewer",
+        "target_lang": "tr",
+        "mode": "clean",
+        "status": "PENDING",
+        "progress": 0,
+        "created_at": "2026-01-07T11:17:54",
+        "completed_at": null,
+        "error_message": null
+      }
+    ],
+    "total": 1,
+    "skip": 0,
+    "limit": 2
+
+
+[PASS] Get Job Status (via translate)
+  Method: GET
+  URL: http://localhost:8000/api/v1/translate/status/invalid-task-id
+  Status Code: 404
+  Response Time: 2.061161s
+  Response: {
+  "detail": "Job not found"
+}
+
+
+[FAIL] Create Series
+  Method: POST
+  URL: http://localhost:8000/api/v1/series
+  Status Code: 403
+  Response Time: 2.086493s
+  Error: Expected [200, 201], got 403
+  Response: {
+  "detail": "Admin access required"
+}
+
+
+[PASS] List Series
+  Method: GET
+  URL: http://localhost:8000/api/v1/series
+  Status Code: 200
+  Response Time: 2.075519s
+  Response: {
+  "success": true,
+  "message": "Found 0 series",
+  "data": []
+}
+
+
+[PASS] Get User Profile
+  Method: GET
+  URL: http://localhost:8000/api/v1/users/profile
+  Status Code: 200
+  Response Time: 2.051705s
+  Response: {
+  "success": true,
+  "message": "Profile retrieved",
+  "data": {
+    "id": 7,
+    "username": "testuser_1767784634",
+    "email": "test_1767784634@example.com",
+    "role": "user",
+    "is_active": true,
+    "created_at": "2026-01-07T11:17:16"
+  }
+}
+
+
+[PASS] Update User Profile
+  Method: PUT
+  URL: http://localhost:8000/api/v1/users/profile
+  Status Code: 200
+  Response Time: 2.099603s
+  Response: {
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "id": 7,
+    "username": "testuser_1767784634",
+    "email": "updated_1767784685@example.com"
+  }
+}
+
+
+[PASS] Get Reading History
+  Method: GET
+  URL: http://localhost:8000/api/v1/reading/history
+  Status Code: 200
+  Response Time: 2.087338s
+  Response: {
+  "success": true,
+  "message": "Found 0 reading history entries",
+  "data": []
+}
+
+
+[PASS] Get Bookmarks
+  Method: GET
+  URL: http://localhost:8000/api/v1/bookmarks
+  Status Code: 200
+  Response Time: 2.060371s
+  Response: {
+  "success": true,
+  "message": "Found 0 bookmarks",
+  "data": []
+}
+
+
+[PASS] List Comments
+  Method: GET
+  URL: http://localhost:8000/api/v1/comments
+  Status Code: 200
+  Response Time: 2.085235s
+  Response: {
+  "success": true,
+  "message": "Found 0 comments",
+  "data": []
+}
+
+
+[PASS] Get Site Settings
+  Method: GET
+  URL: http://localhost:8000/api/v1/settings
+  Status Code: 200
+  Response Time: 2.070196s
+  Response: {
+  "success": true,
+  "message": "Site settings retrieved",
+  "data": {
+    "id": 1,
+    "site_name": "Webtoon AI Translator",
+    "site_description": null,
+    "site_logo_url": null,
+    "theme": "light",
+    "primary_color": "#007bff",
+    "secondary_color": "#6c757d",
+    "maintenance_mode": false,
+    "maintenance_message": null,
+    "allow_registration": true,
+    "allow_guest_access": true,
+    "default_language": "tr",
+    "supported_languages": [
+      "tr",
+      "en"
+    ],
+    "creat
+
+
+[PASS] Get Metrics Summary
+  Method: GET
+  URL: http://localhost:8000/api/v1/metrics/summary
+  Status Code: 200
+  Response Time: 2.057376s
+  Response: {
+  "success": true,
+  "message": "Metrics retrieved",
+  "data": {
+    "api": {
+      "requests": 309,
+      "errors": 69,
+      "timing": {
+        "count": 307,
+        "min": 0.0035638809204101562,
+        "max": 0.30942702293395996,
+        "avg": 0.043088324295193055,
+        "p50": 0.01187896728515625,
+        "p95": 0.26004552841186523,
+        "p99": 0.290358304977417
+      }
+    },
+    "translation": {
+      "started": 0,
+      "completed": 0,
+      "failed": 0,
+      "timing": {}
+    }
+
+
+[PASS] Get Cache Status
+  Method: GET
+  URL: http://localhost:8000/api/v1/cache/status
+  Status Code: 200
+  Response Time: 2.06404s
+  Response: {
+  "success": true,
+  "message": "Cache status retrieved",
+  "data": {
+    "status": "enabled",
+    "total_keys": 1,
+    "memory_used": "1.76M",
+    "memory_peak": "1.84M"
+  }
+}
+
+
+[PASS] Get Notifications
+  Method: GET
+  URL: http://localhost:8000/api/v1/notifications
+  Status Code: 200
+  Response Time: 2.086599s
+  Response: {
+  "success": true,
+  "message": "Found 0 notifications",
+  "data": []
+}
+
+
+[PASS] Get Subscription Status
+  Method: GET
+  URL: http://localhost:8000/api/v1/subscription
+  Status Code: 200
+  Response Time: 2.098109s
+  Response: {
+  "success": true,
+  "message": "Subscription retrieved",
+  "data": {
+    "id": 3,
+    "user_id": 7,
+    "plan_type": "free",
+    "monthly_chapter_limit": 0,
+    "used_chapters_this_month": 0,
+    "price_per_extra_chapter": "0.50",
+    "is_active": true,
+    "started_at": "2026-01-07T11:18:23",
+    "expires_at": null
+  }
+}
+
+
+[PASS] List Chapters (Files)
+  Method: GET
+  URL: http://localhost:8000/api/v1/files/test_series/chapters
+  Status Code: 200
+  Response Time: 2.070438s
+  Response: {
+  "success": true,
+  "message": "Chapters listed",
+  "data": {
+    "series_name": "test_series",
+    "source_lang": "en",
+    "target_lang": "tr",
+    "chapters": [],
+    "total": 0
+  }
+}
+
+
+[PASS] Get Admin Stats
+  Method: GET
+  URL: http://localhost:8000/api/v1/admin/stats
+  Status Code: 200
+  Response Time: 2.083562s
+  Response: {
+  "success": true,
+  "message": "Statistics retrieved",
+  "data": {
+    "jobs": {
+      "total": 3,
+      "completed": 0,
+      "failed": 0,
+      "pending": 0
+    },
+    "users": {
+      "total": 8,
+      "active": 8
+    }
+  }
+}
+
+
+[PASS] Clear Cache (Admin)
+  Method: DELETE
+  URL: http://localhost:8000/api/v1/admin/cache/clear
+  Status Code: 200
+  Response Time: 2.079355s
+  Response: {
+  "success": true,
+  "message": "Cache cleared successfully",
+  "data": {
+    "cleared": true
+  }
+}
+
+
+[FAIL] Get Admin Logs
+  Method: GET
+  URL: http://localhost:8000/api/v1/admin/logs
+  Status Code: 500
+  Response Time: 2.278238s
+  Error: Expected [200, 201], got 500
+  Response: "Internal Server Error"
+
+
+[PASS] Get Admin Logs Stats
+  Method: GET
+  URL: http://localhost:8000/api/v1/admin/logs/stats
+  Status Code: 200
+  Response Time: 2.077639s
+  Response: {
+  "success": true,
+  "message": "Log statistics retrieved",
+  "data": {
+    "total": 396,
+    "by_level": {
+      "ERROR": 2,
+      "INFO": 326,
+      "WARNING": 68
+    },
+    "top_modules": {
+      "LoggingMiddleware": 396
+    },
+    "error_rate": 0.51,
+    "errors": 2
+  }
+}
+
+
+[PASS] Update Site Settings (Admin)
+  Method: PUT
+  URL: http://localhost:8000/api/v1/settings
+  Status Code: 200
+  Response Time: 2.105162s
+  Response: {
+  "success": true,
+  "message": "Site settings updated successfully",
+  "data": {
+    "id": 1,
+    "site_name": "Webtoon AI Translator",
+    "site_description": null,
+    "site_logo_url": null,
+    "theme": "light",
+    "primary_color": "#007bff",
+    "secondary_color": "#6c757d",
+    "maintenance_mode": false,
+    "maintenance_message": null,
+    "allow_registration": true,
+    "allow_guest_access": true,
+    "default_language": "tr",
+    "supported_languages": [
+      "tr",
+      "en"
+    ],
+

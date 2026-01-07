@@ -26,6 +26,7 @@ class EndpointTester:
         self.token = None
         self.user_id = None
         self.admin_token = None
+        self.adminadmin_token = None
         self.results: List[Dict[str, Any]] = []
         self.passed = 0
         self.failed = 0
@@ -78,7 +79,8 @@ class EndpointTester:
             # Auth kontrolü
             headers = {}
             if requires_auth or requires_admin:
-                token = self.admin_token if requires_admin else self.token
+                # AdminAdmin token'ı öncelikli kullan (hem admin hem adminadmin yetkileri için)
+                token = self.adminadmin_token if requires_admin and self.adminadmin_token else (self.admin_token if requires_admin else self.token)
                 if not token:
                     result["status"] = "SKIPPED"
                     result["error"] = "Authentication token not available"
@@ -246,6 +248,146 @@ class EndpointTester:
                 data = result["response"].get("data", {})
                 self.token = data.get("access_token") if isinstance(data, dict) else None
     
+    def setup_admin_authentication(self, file=None):
+        """Admin authentication setup - AdminAdmin ve Admin login"""
+        self.log("\n=== ADMIN AUTHENTICATION SETUP ===", "INFO", file)
+        
+        # 1. AdminAdmin login (SystemAdmin)
+        adminadmin_login = {
+            "username": "SystemAdmin",
+            "email": "Admin@Admin.com",
+            "password": "hashhash"
+        }
+        
+        result = self.test_endpoint(
+            "AdminAdmin Login",
+            "POST",
+            f"{API_V1}/auth/login",
+            json_data={"username": adminadmin_login["username"], "password": adminadmin_login["password"]},
+            file=file
+        )
+        
+        if result["status"] == "PASS" and result.get("response"):
+            response_data = result["response"]
+            data = response_data.get("data", {})
+            if isinstance(data, dict):
+                self.adminadmin_token = data.get("access_token")
+            if not self.adminadmin_token and isinstance(response_data, dict):
+                self.adminadmin_token = response_data.get("access_token")
+            if self.adminadmin_token:
+                self.log(f"AdminAdmin token obtained: {self.adminadmin_token[:20]}...", "INFO", file)
+        
+        # 2. Admin login (test)
+        admin_login = {
+            "username": "test",
+            "email": "test@test.com",
+            "password": "test123"
+        }
+        
+        result = self.test_endpoint(
+            "Admin Login",
+            "POST",
+            f"{API_V1}/auth/login",
+            json_data={"username": admin_login["username"], "password": admin_login["password"]},
+            file=file
+        )
+        
+        if result["status"] == "PASS" and result.get("response"):
+            response_data = result["response"]
+            data = response_data.get("data", {})
+            if isinstance(data, dict):
+                self.admin_token = data.get("access_token")
+            if not self.admin_token and isinstance(response_data, dict):
+                self.admin_token = response_data.get("access_token")
+            if self.admin_token:
+                self.log(f"Admin token obtained: {self.admin_token[:20]}...", "INFO", file)
+        
+        # 3. AdminAdmin ile yeni admin oluştur (test)
+        if self.adminadmin_token:
+            timestamp = int(datetime.now().timestamp())
+            new_admin_data = {
+                "username": f"admin_{timestamp}",
+                "email": f"admin_{timestamp}@example.com",
+                "password": "AdminPass123!"
+            }
+            
+            result = self.test_endpoint(
+                "Create Admin User (by AdminAdmin)",
+                "POST",
+                f"{API_V1}/admin/users/create-admin",
+                requires_admin=True,  # AdminAdmin token kullanılacak
+                json_data=new_admin_data,
+                file=file
+            )
+            
+            if result["status"] == "PASS":
+                self.log(f"New admin user created: {new_admin_data['username']}", "INFO", file)
+    
+    def check_database(self, file=None):
+        """Veritabanına yazılan verileri kontrol et"""
+        self.log("\n=== DATABASE CHECK ===", "INFO", file)
+        
+        try:
+            import sqlite3
+            import os
+            from app.core.config import settings
+            
+            # Database path
+            db_path = getattr(settings, 'DATABASE_URL', 'sqlite:///./webtoon.db')
+            if db_path.startswith('sqlite:///'):
+                db_path = db_path.replace('sqlite:///', '')
+            
+            if not os.path.exists(db_path):
+                self.log(f"Database file not found: {db_path}", "WARN", file)
+                return
+            
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Users tablosu
+            cursor.execute("SELECT COUNT(*) FROM users")
+            user_count = cursor.fetchone()[0]
+            self.log(f"Users in database: {user_count}", "INFO", file)
+            
+            # Admin users
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
+            admin_count = cursor.fetchone()[0]
+            self.log(f"Admin users: {admin_count}", "INFO", file)
+            
+            # Series
+            cursor.execute("SELECT COUNT(*) FROM series")
+            series_count = cursor.fetchone()[0]
+            self.log(f"Series in database: {series_count}", "INFO", file)
+            
+            # Translation jobs
+            cursor.execute("SELECT COUNT(*) FROM translation_jobs")
+            job_count = cursor.fetchone()[0]
+            self.log(f"Translation jobs: {job_count}", "INFO", file)
+            
+            # Comments
+            cursor.execute("SELECT COUNT(*) FROM comments")
+            comment_count = cursor.fetchone()[0]
+            self.log(f"Comments: {comment_count}", "INFO", file)
+            
+            # Reading history
+            cursor.execute("SELECT COUNT(*) FROM readings")
+            reading_count = cursor.fetchone()[0]
+            self.log(f"Reading history entries: {reading_count}", "INFO", file)
+            
+            conn.close()
+            
+            if file:
+                file.write(f"\nDatabase Summary:\n")
+                file.write(f"  Users: {user_count}\n")
+                file.write(f"  Admins: {admin_count}\n")
+                file.write(f"  Series: {series_count}\n")
+                file.write(f"  Jobs: {job_count}\n")
+                file.write(f"  Comments: {comment_count}\n")
+                file.write(f"  Reading History: {reading_count}\n\n")
+                
+        except Exception as e:
+            self.log(f"Database check error: {str(e)}", "WARN", file)
+    
     def run_all_tests(self):
         """Tüm endpoint'leri test et"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -273,6 +415,9 @@ class EndpointTester:
             # 2. Authentication
             self.log("\n[2] AUTHENTICATION ENDPOINTS", "INFO", f)
             self.setup_authentication(f)
+            
+            # 2.5. Admin Authentication
+            self.setup_admin_authentication(f)
             
             # 3. Public Endpoints
             self.log("\n[3] PUBLIC ENDPOINTS", "INFO", f)
@@ -379,6 +524,7 @@ class EndpointTester:
             # 7. Series Management
             self.log("\n[7] SERIES MANAGEMENT ENDPOINTS", "INFO", f)
             if self.token:
+                # Create Series requires admin
                 series_data = {
                     "title": f"Test Series {int(datetime.now().timestamp())}",
                     "description": "Test series description",
@@ -386,10 +532,10 @@ class EndpointTester:
                     "status": "ongoing"
                 }
                 result = self.test_endpoint(
-                    "Create Series",
+                    "Create Series (Admin)",
                     "POST",
                     f"{API_V1}/series",
-                    requires_auth=True,
+                    requires_admin=True,
                     json_data=series_data,
                     file=f
                 )
@@ -412,7 +558,7 @@ class EndpointTester:
                         "Update Series",
                         "PUT",
                         f"{API_V1}/series/{series_id}",
-                        requires_auth=True,
+                        requires_admin=True,  # Admin veya AdminAdmin gerekli
                         json_data={"description": "Updated description"},
                         file=f
                     )
@@ -542,6 +688,56 @@ class EndpointTester:
                     expected_status=[200, 404],  # 404 if series doesn't exist
                     file=f
                 )
+            
+            # 18. Admin Endpoints
+            self.log("\n[18] ADMIN ENDPOINTS", "INFO", f)
+            if self.admin_token:
+                self.test_endpoint(
+                    "Get Admin Stats",
+                    "GET",
+                    f"{API_V1}/admin/stats",
+                    requires_admin=True,
+                    file=f
+                )
+                self.test_endpoint(
+                    "Clear Cache (Admin)",
+                    "DELETE",
+                    f"{API_V1}/admin/cache/clear",
+                    requires_admin=True,
+                    file=f
+                )
+                self.test_endpoint(
+                    "Get Admin Logs",
+                    "GET",
+                    f"{API_V1}/admin/logs",
+                    requires_admin=True,
+                    params={"limit": 10},
+                    file=f
+                )
+                self.test_endpoint(
+                    "Get Admin Logs Stats",
+                    "GET",
+                    f"{API_V1}/admin/logs/stats",
+                    requires_admin=True,
+                    file=f
+                )
+            else:
+                self.log("Admin token not available, admin endpoints skipped", "SKIP", f)
+            
+            # 19. Site Settings (Admin Update)
+            self.log("\n[19] SITE SETTINGS (ADMIN UPDATE)", "INFO", f)
+            if self.admin_token:
+                self.test_endpoint(
+                    "Update Site Settings (Admin)",
+                    "PUT",
+                    f"{API_V1}/settings",
+                    requires_admin=True,
+                    json_data={"maintenance_mode": False},
+                    file=f
+                )
+            
+            # 20. Database Check
+            self.check_database(f)
             
             # Rapor yazdır
             self.print_summary(f)

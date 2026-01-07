@@ -15,7 +15,7 @@ from app.models.log import Log
 router = APIRouter()
 
 
-@router.get("/logs", response_model=BaseResponse[list])
+@router.get("/logs", response_model=BaseResponse[dict])
 def get_logs(
     level: Optional[str] = Query(None, pattern="^(INFO|WARNING|ERROR|DEBUG)$"),
     module: Optional[str] = None,

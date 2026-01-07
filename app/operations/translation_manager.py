@@ -23,20 +23,8 @@ from app.services.cache_service import CacheService
 from app.core.metrics import metrics
 import time
 
-# Initialize Celery
-celery_app = Celery(
-    "webtoon_worker",
-    broker=settings.REDIS_URL,
-    backend=settings.REDIS_URL
-)
-
-celery_app.conf.update(
-    task_serializer='json',
-    accept_content=['json'],
-    result_serializer='json',
-    timezone='UTC',
-    enable_utc=True,
-)
+# Import Celery app from core (use centralized app)
+from app.core.celery_app import celery_app
 
 
 @celery_app.task(bind=True, name="process_chapter_task")
@@ -71,10 +59,15 @@ def process_chapter_task(
     scraper = None
     start_time = time.time()
     try:
+        logger.info(f"[TASK START] process_chapter_task started for: {chapter_url}")
+        logger.info(f"[TASK START] Parameters: target_lang={target_lang}, source_lang={source_lang}, mode={mode}, translate_type={translate_type}")
+        
         # Initialize services
+        logger.info("[TASK START] Initializing services...")
         cache_service = CacheService()
         scraper = ScraperService()
         ocr = OCRService()
+        logger.info("[TASK START] Services initialized")
         ai_translator = AITranslator() if translate_type == TranslateType.AI else None
         free_translator = FreeTranslator() if translate_type == TranslateType.FREE else None
         # Use advanced NER if available, fallback to basic NER
@@ -119,15 +112,22 @@ def process_chapter_task(
             state='PROCESSING',
             meta={'progress': 10, 'message': 'Resimler indiriliyor...'}
         )
-        logger.info(f"Fetching images from: {chapter_url}")
+        logger.info(f"[TASK] Fetching images from: {chapter_url}")
         
         # Run async scraper in sync context
+        logger.info("[TASK] Creating event loop for async scraper...")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
+            logger.info("[TASK] Calling scraper.fetch_chapter_images...")
             images_bytes = loop.run_until_complete(scraper.fetch_chapter_images(chapter_url))
+            logger.info(f"[TASK] Scraper returned {len(images_bytes) if images_bytes else 0} images")
+        except Exception as e:
+            logger.error(f"[TASK] Error in scraper: {e}", exc_info=True)
+            raise
         finally:
             loop.close()
+            logger.info("[TASK] Event loop closed")
         
         if not images_bytes:
             raise ValueError("No images found")
@@ -145,7 +145,7 @@ def process_chapter_task(
         
         for idx, img_bytes in enumerate(images_bytes):
             logger.debug(f"Processing OCR for page {idx + 1}/{len(images_bytes)}")
-            blocks = ocr.detect_text(img_bytes)
+            blocks = ocr.detect_text_blocks(img_bytes)
             all_pages_blocks.append(blocks)
             
             for block in blocks:

@@ -279,28 +279,37 @@ def start_batch_translation(
 ):
     """Start batch translation for multiple chapters"""
     try:
+        from loguru import logger
+        logger.info(f"[DEBUG] Batch translation request received: base_url={request.base_url}, start={request.start_chapter}, end={request.end_chapter}, series_name={request.series_name}")
+        
         # Validate language pair
         is_valid, error_msg = LanguageDetector.validate_language_pair(
             request.source_lang, 
             request.target_lang
         )
         if not is_valid:
+            logger.error(f"[DEBUG] Language pair validation failed: {error_msg}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=error_msg
             )
+        logger.info(f"[DEBUG] Language pair validated: {request.source_lang} -> {request.target_lang}")
         
         # Generate chapter numbers
         chapter_numbers = list(range(request.start_chapter, request.end_chapter + 1))
+        logger.info(f"[DEBUG] Generated chapter numbers: {chapter_numbers} (total: {len(chapter_numbers)})")
         
         # Validate translate_type
         if request.translate_type not in [TranslateType.AI, TranslateType.FREE]:
+            logger.error(f"[DEBUG] Invalid translate_type: {request.translate_type}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"translate_type must be {TranslateType.AI} (AI) or {TranslateType.FREE} (Free)"
             )
+        logger.info(f"[DEBUG] Translate type: {request.translate_type} ({'AI' if request.translate_type == TranslateType.AI else 'FREE'})")
         
         # Start batch task
+        logger.info(f"[DEBUG] Starting batch translation task with base_url: {request.base_url}")
         task = batch_translation_task.delay(
             base_url=request.base_url,
             chapter_numbers=chapter_numbers,
@@ -310,6 +319,7 @@ def start_batch_translation(
             series_name=request.series_name,
             translate_type=request.translate_type
         )
+        logger.info(f"[DEBUG] Batch translation task started with task_id: {task.id}")
         
         # Save to database
         job = TranslationJob(

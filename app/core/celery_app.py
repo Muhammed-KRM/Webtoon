@@ -11,7 +11,9 @@ celery_app = Celery(
     include=[
         "app.tasks.translation_tasks",
         "app.tasks.scraping_tasks",
-        "app.tasks.notification_tasks"
+        "app.tasks.notification_tasks",
+        "app.operations.translation_manager",  # Include translation manager tasks
+        "app.operations.batch_translation_manager"  # Include batch translation tasks
     ]
 )
 
@@ -34,4 +36,6 @@ celery_app.conf.task_routes = {
     "app.tasks.translation_tasks.*": {"queue": "translation"},
     "app.tasks.scraping_tasks.*": {"queue": "scraping"},
     "app.tasks.notification_tasks.*": {"queue": "notifications"},
+    "batch_translation_task": {"queue": "translation"},  # Batch translation tasks
+    "process_chapter_task": {"queue": "translation"},  # Chapter translation tasks
 }

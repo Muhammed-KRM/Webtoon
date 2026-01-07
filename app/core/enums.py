@@ -79,10 +79,11 @@ class ProperNounType(str, Enum):
 
 class UserRole(str, Enum):
     """User role"""
-    ADMIN = "admin"
-    USER = "user"
-    GUEST = "guest"
-    PREMIUM = "premium"
+    ADMINADMIN = "adminadmin"  # Super admin - can create admins
+    ADMIN = "admin"  # Normal admin - cannot create admins
+    USER = "user"  # Normal user
+    PREMIUM = "premium"  # Premium user
+    GUEST = "guest"  # Guest user
 
 
 class Theme(str, Enum):

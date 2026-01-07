@@ -35,10 +35,13 @@ class BaseScraper(ABC):
         """Analyze URL and extract chapter info"""
         pass
     
-    async def download_image(self, img_url: str) -> bytes:
+    async def download_image(self, img_url: str, referer: str = None) -> bytes:
         """Download a single image"""
         try:
-            response = await self.client.get(img_url)
+            headers = {}
+            if referer:
+                headers['Referer'] = referer
+            response = await self.client.get(img_url, headers=headers)
             response.raise_for_status()
             return response.content
         except Exception as e:

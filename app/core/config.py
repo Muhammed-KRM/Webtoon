@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Webtoon AI Translator"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
+    ALLOW_MULTIPLE_ADMINS: bool = False  # Allow multiple admin users in test/dev mode
     
     # Security
     SECRET_KEY: str

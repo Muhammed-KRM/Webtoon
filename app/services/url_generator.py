@@ -68,10 +68,13 @@ class URLGenerator:
         
         for chapter_num in chapter_numbers:
             if url_pattern:
-                # Replace pattern with chapter number
-                url = base_url.replace(url_pattern, str(chapter_num))
+                # Pattern found (e.g., "bolum-20"), replace the number part with new chapter number
+                import re
+                # Replace the number in the pattern: "bolum-20" -> "bolum-21"
+                pattern_with_number = re.sub(r'\d+', str(chapter_num), url_pattern)
+                url = base_url.replace(url_pattern, pattern_with_number)
             else:
-                # Try common patterns
+                # No pattern found, try common patterns
                 url = URLGenerator._try_common_patterns(base_url, chapter_num)
             
             urls.append(url)

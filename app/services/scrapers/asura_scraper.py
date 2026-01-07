@@ -6,6 +6,8 @@ import asyncio
 from typing import List, Dict
 from bs4 import BeautifulSoup
 from loguru import logger
+import undetected_chromedriver as uc
+import time
 from app.services.scrapers.base_scraper import BaseScraper
 
 
@@ -15,6 +17,9 @@ class AsuraScraper(BaseScraper):
     def __init__(self):
         super().__init__()
         self.base_url = "https://asurascans.com.tr"  # Updated to .com.tr domain
+        # Use undetected-chromedriver for Cloudflare bypass
+        # Note: Non-headless mode required for Cloudflare bypass
+        self.driver = None
     
     async def fetch_chapter_images(self, chapter_url: str) -> List[bytes]:
         """
@@ -25,10 +30,54 @@ class AsuraScraper(BaseScraper):
         try:
             logger.info(f"Fetching AsuraScans chapter: {chapter_url}")
             
-            # Get the chapter page
-            response = await self.client.get(chapter_url)
-            response.raise_for_status()
-            html = response.text
+            # Get the chapter page using undetected-chromedriver (Cloudflare bypass)
+            def fetch_with_selenium(url):
+                # Initialize driver if not already done
+                if self.driver is None:
+                    logger.info("[SCRAPER] Initializing Chrome driver...")
+                    options = uc.ChromeOptions()
+                    # Try headless mode first (works in Celery worker)
+                    # If Cloudflare blocks, we'll need to use non-headless
+                    try:
+                        # For Celery worker, we need headless mode
+                        import os
+                        if os.getenv('CELERY_WORKER', '').lower() == 'true' or 'celery' in os.getenv('_', '').lower():
+                            # Running in Celery worker - use headless
+                            options.add_argument('--headless=new')
+                            logger.info("[SCRAPER] Using headless mode (Celery worker detected)")
+                        else:
+                            # Running in main process - try non-headless for Cloudflare
+                            logger.info("[SCRAPER] Using non-headless mode (main process)")
+                    except:
+                        # Default to headless for safety
+                        options.add_argument('--headless=new')
+                        logger.info("[SCRAPER] Using headless mode (default)")
+                    
+                    options.add_argument('--no-sandbox')
+                    options.add_argument('--disable-dev-shm-usage')
+                    options.add_argument('--disable-blink-features=AutomationControlled')
+                    options.add_argument('--disable-gpu')
+                    options.add_argument('--window-size=1920,1080')
+                    options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+                    
+                    try:
+                        self.driver = uc.Chrome(options=options, version_main=None)
+                        logger.info("[SCRAPER] Chrome driver initialized successfully")
+                    except Exception as e:
+                        logger.error(f"[SCRAPER] Failed to initialize Chrome driver: {e}")
+                        raise
+                
+                logger.info(f"[SCRAPER] Fetching URL: {url}")
+                self.driver.get(url)
+                # Wait for Cloudflare challenge to complete
+                logger.info("[SCRAPER] Waiting for page to load (10 seconds)...")
+                time.sleep(10)  # Wait for page to load
+                logger.info("[SCRAPER] Page loaded, getting HTML...")
+                html = self.driver.page_source
+                logger.info(f"[SCRAPER] HTML retrieved, length: {len(html)}")
+                return html
+            
+            html = await asyncio.to_thread(fetch_with_selenium, chapter_url)
             soup = BeautifulSoup(html, 'html.parser')
             
             image_urls = []
@@ -130,8 +179,8 @@ class AsuraScraper(BaseScraper):
             
             logger.info(f"Found {len(unique_urls)} images, downloading...")
             
-            # Download images in parallel
-            images = await self._download_images_parallel(unique_urls)
+            # Download images in parallel with referer
+            images = await self._download_images_parallel(unique_urls, chapter_url=chapter_url)
             
             return images
             
@@ -139,9 +188,11 @@ class AsuraScraper(BaseScraper):
             logger.error(f"Error fetching AsuraScans images: {e}")
             raise
     
-    async def _download_images_parallel(self, image_urls: List[str]) -> List[bytes]:
+    async def _download_images_parallel(self, image_urls: List[str], chapter_url: str = None) -> List[bytes]:
         """Download multiple images in parallel"""
-        tasks = [self.download_image(url) for url in image_urls]
+        # Use httpx client for image downloads with referer header
+        referer = chapter_url or self.base_url
+        tasks = [self.download_image(url, referer=referer) for url in image_urls]
         images = await asyncio.gather(*tasks, return_exceptions=True)
         
         # Filter out exceptions
@@ -152,8 +203,20 @@ class AsuraScraper(BaseScraper):
     async def analyze_url(self, url: str) -> Dict:
         """Analyze AsuraComic URL"""
         try:
-            response = await self.client.get(url)
-            soup = BeautifulSoup(response.text, 'html.parser')
+            # Use undetected-chromedriver for Cloudflare bypass
+            def fetch_with_selenium(url):
+                if self.driver is None:
+                    options = uc.ChromeOptions()
+                    options.add_argument('--no-sandbox')
+                    options.add_argument('--disable-dev-shm-usage')
+                    self.driver = uc.Chrome(options=options, version_main=None)
+                
+                self.driver.get(url)
+                time.sleep(10)
+                return self.driver.page_source
+            
+            html = await asyncio.to_thread(fetch_with_selenium, url)
+            soup = BeautifulSoup(html, 'html.parser')
             
             # Extract title
             title_elem = (
@@ -179,4 +242,17 @@ class AsuraScraper(BaseScraper):
                 "page_count": 0,
                 "images": []
             }
+    
+    async def close(self):
+        """Close HTTP client and Selenium driver"""
+        try:
+            await self.client.aclose()
+        except:
+            pass
+        try:
+            if self.driver:
+                self.driver.quit()
+                self.driver = None
+        except:
+            pass
 

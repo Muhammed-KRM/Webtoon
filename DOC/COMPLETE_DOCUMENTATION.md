@@ -263,6 +263,7 @@ Sistem otomatik olarak en iyi çeviri servisini seçer:
 **httpx + BeautifulSoup + Selenium**
 
 - **Nerede:** `app/services/scraper_service.py`, `app/services/scrapers/`
+- **Cloudflare Bypass:** `undetected-chromedriver` kullanılarak Cloudflare koruması bypass edilir (2026 güncellemesi)
 - **Neden:** Webtoon sitelerinden içerik çekme
 - **Kullanım:**
   - Webtoons.com scraping
@@ -2703,3 +2704,96 @@ if self.cdn_service.cdn_enabled:
 3. ✅ **Veri Kaybı Önleme**: Chapter/translation çakışmalarında eski veriler korunur veya güvenli şekilde değiştirilir
 4. ✅ **Validation**: Tag'ler enum'dan validate edilir, geçersiz tag'ler atlanır
 5. ✅ **Seri Description Zorunluluğu**: Seri oluştururken description zorunludur
+
+---
+
+## 🔐 **Cloudflare Bypass ve Scraper İyileştirmeleri (2026 Güncellemesi)**
+
+### Cloudflare Koruması Sorunu
+
+**Sorun:** AsuraScans.com.tr ve benzeri siteler Cloudflare koruması kullanıyor, bu da normal HTTP isteklerinde 403 Forbidden hatasına neden oluyor.
+
+**Çözüm:** undetected-chromedriver kütüphanesi kullanılarak Cloudflare challenge'ı bypass edildi.
+
+### Uygulanan Değişiklikler
+
+#### 1. AsuraScraper Güncellemesi
+
+**Lokasyon:** pp/services/scrapers/asura_scraper.py
+
+**Değişiklikler:**
+- ✅ undetected-chromedriver import edildi
+- ✅ Selenium driver ile sayfa yükleme eklendi
+- ✅ Cloudflare challenge için 10 saniye bekleme eklendi
+- ✅ Referer header eklendi (görüntü indirmeleri için)
+- ✅ close() metodu eklendi (driver kapatma)
+
+**Önemli Notlar:**
+- ⚠️ **Non-headless mod gerekli:** Cloudflare bypass için non-headless mod kullanılmalı (headless modda Cloudflare challenge geçilemiyor)
+- ⚠️ **Bekleme süresi:** Her sayfa yüklemesi için 10 saniye bekleme var (Cloudflare challenge'ın tamamlanması için)
+- ⚠️ **Driver yönetimi:** Driver her scraper instance'ı için bir kez oluşturuluyor, close() metodunda kapatılıyor
+
+#### 2. BaseScraper Güncellemesi
+
+**Lokasyon:** pp/services/scrapers/base_scraper.py
+
+**Değişiklikler:**
+- ✅ download_image metoduna 
+eferer parametresi eklendi
+- ✅ Görüntü indirmelerinde referer header gönderiliyor (CDN koruması için)
+
+#### 3. Batch Translation Manager Güncellemesi
+
+**Lokasyon:** pp/operations/batch_translation_manager.py
+
+**Değişiklikler:**
+- ✅ 	ask.get() yerine AsyncResult polling kullanıldı
+- ✅ Celery best practices'e uygun hale getirildi
+- ✅ "Never call result.get() within a task!" hatası çözüldü
+
+**Neden:** Celery task içinde başka bir task'ın result'unu .get() ile almak yasak. Bunun yerine AsyncResult ile polling yapılmalı.
+
+### Yeni Bağımlılıklar
+
+**requirements.txt:**
+`python
+undetected-chromedriver>=3.5.5  # Cloudflare bypass için
+`
+
+### Test Sonuçları
+
+- ✅ Manuel scraper testi başarılı (4 görüntü indirildi)
+- ✅ Cloudflare challenge geçildi
+- ✅ Batch translation task PROCESSING durumuna geçti
+- ⏳ Task tamamlanması bekleniyor (uzun sürebilir - her bölüm için ~10 saniye Cloudflare bekleme)
+
+### Kullanım
+
+**Normal kullanım:** Değişiklik yok, scraper otomatik olarak Cloudflare bypass yapar.
+
+**Manuel test:**
+`python
+from app.services.scraper_service import ScraperService
+import asyncio
+
+async def test():
+    scraper = ScraperService()
+    images = await scraper.fetch_chapter_images("https://asurascans.com.tr/manga/martial-peak/bolum-20/")
+    print(f"Found {len(images)} images")
+    await scraper.close()
+
+asyncio.run(test())
+`
+
+### Bilinen Sınırlamalar
+
+1. **Non-headless mod:** Production ortamında GUI gerektirir (headless modda çalışmaz)
+2. **Bekleme süresi:** Her sayfa yüklemesi için 10 saniye bekleme var (optimize edilebilir)
+3. **Memory kullanımı:** Selenium driver memory kullanır, close() ile kapatılmalı
+
+### Gelecek İyileştirmeler
+
+- [ ] Headless mod desteği (Cloudflare bypass için alternatif yöntemler)
+- [ ] Bekleme süresi optimizasyonu (dinamik bekleme)
+- [ ] Driver pool yönetimi (birden fazla scraper instance için)
+
